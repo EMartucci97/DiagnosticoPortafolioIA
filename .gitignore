@@ -2,3 +2,10 @@ data/
 *.db
 node_modules/
 .env
+.env.local
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
+
+/generated/prisma

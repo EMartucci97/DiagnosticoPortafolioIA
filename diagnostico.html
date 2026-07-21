@@ -1167,7 +1167,7 @@
 
 <script>
 // ── CONFIG ─────────────────────────────────────────
-const API_ENDPOINT      = 'http://localhost:3031';
+const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
 const WHATSAPP_NUMBER   = 'TU_NUMERO_WHATSAPP'; // ← reemplazar, ej: '5491112345678'
 const WEBHOOK_URL       = 'TU_WEBHOOK_URL_AQUI'; // ← endpoint n8n / Make
 

@@ -1,37 +1,32 @@
 import http from 'http';
 import https from 'https';
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import pg from 'pg';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const { Pool } = pg;
 const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
 const PORT = 3031;
 
-// ── DATABASE ──────────────────────────────────────────
-mkdirSync(join(__dirname, 'data'), { recursive: true });
-const DB_PATH = join(__dirname, 'data', 'diagnosticos.db');
-const db = new DatabaseSync(DB_PATH);
+// ── DATABASE (Supabase / PostgreSQL) ──────────────────
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 5
+});
 
-db.exec(`
+// Crear tabla si no existe (idempotente)
+await pool.query(`
     CREATE TABLE IF NOT EXISTS diagnosticos (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_at  TEXT    DEFAULT (datetime('now', 'localtime')),
-        email       TEXT,
-        portfolio   TEXT,
+        id           SERIAL PRIMARY KEY,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        email        TEXT,
+        portfolio    TEXT,
         quiz_answers TEXT,
-        diagnostico TEXT,
+        diagnostico  TEXT,
         nota_interna TEXT,
-        score       INTEGER
+        score        INTEGER
     )
 `);
-
-const stmtInsert = db.prepare(`
-    INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score)
-    VALUES (?, ?, ?, ?, ?)
-`);
-const stmtEmail = db.prepare(`UPDATE diagnosticos SET email = ? WHERE id = ?`);
+console.log('✓ Tabla diagnosticos lista en Supabase');
 
 // ── NASDAQ / CRYPTO HELPERS ───────────────────────────
 const NASDAQ_HEADERS = {
@@ -123,22 +118,27 @@ http.createServer(async (req, res) => {
         // ── GUARDAR DIAGNÓSTICO ───────────────────────
         if (req.url === '/save') {
             const { portfolio, quizAnswers, diagnostico, notaInterna, score } = body;
-            const result = stmtInsert.run(
-                typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
-                typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
-                diagnostico || '',
-                notaInterna || '',
-                score ?? null
+            const { rows } = await pool.query(
+                `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score)
+                 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+                [
+                    typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
+                    typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
+                    diagnostico || '',
+                    notaInterna || '',
+                    score ?? null
+                ]
             );
-            console.log(`[DB] Guardado id=${result.lastInsertRowid}`);
-            return jsonRes(res, 200, { ok: true, id: result.lastInsertRowid });
+            const id = rows[0].id;
+            console.log(`[DB] Guardado id=${id}`);
+            return jsonRes(res, 200, { ok: true, id });
         }
 
         // ── GUARDAR EMAIL ─────────────────────────────
         if (req.url === '/save-email') {
             const { id, email } = body;
             if (!id || !email) return jsonRes(res, 400, { error: 'id y email requeridos' });
-            stmtEmail.run(email.trim(), id);
+            await pool.query(`UPDATE diagnosticos SET email = $1 WHERE id = $2`, [email.trim(), id]);
             console.log(`[DB] Email id=${id} → ${email}`);
             return jsonRes(res, 200, { ok: true });
         }
@@ -187,7 +187,13 @@ http.createServer(async (req, res) => {
             apiRes.on('end', () => {
                 try {
                     const parsed = JSON.parse(data);
-                    jsonRes(res, 200, { text: parsed.content?.[0]?.text ?? '' });
+                    if (parsed.error || parsed.type === 'error') {
+                        console.error('[Anthropic error]', JSON.stringify(parsed.error || parsed));
+                        return jsonRes(res, 500, { error: parsed.error?.message || 'Error de Anthropic' });
+                    }
+                    const text = parsed.content?.[0]?.text ?? '';
+                    if (!text) console.warn('[Anthropic] Respuesta vacía. Parsed:', JSON.stringify(parsed).slice(0, 200));
+                    jsonRes(res, 200, { text });
                 } catch (e) { jsonRes(res, 500, { error: e.message }); }
             });
         });
@@ -200,5 +206,5 @@ http.createServer(async (req, res) => {
     }
 }).listen(PORT, () => {
     console.log(`✓ Proxy en http://localhost:${PORT}`);
-    console.log(`✓ Base de datos: ${DB_PATH}`);
+    console.log(`✓ Base de datos: Supabase PostgreSQL`);
 });

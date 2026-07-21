@@ -1,0 +1,28 @@
+{
+  "name": "landings-ruarte-prod",
+  "version": "1.0.0",
+  "description": "",
+  "main": "editor-panel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EMartucci97/DiagnosticoPortafolioIA.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/EMartucci97/DiagnosticoPortafolioIA/issues"
+  },
+  "homepage": "https://github.com/EMartucci97/DiagnosticoPortafolioIA#readme",
+  "devDependencies": {
+    "prisma": "^7.9.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.9.0",
+    "pg": "^8.22.0"
+  }
+}
