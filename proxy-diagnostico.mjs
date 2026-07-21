@@ -1,0 +1,204 @@
+import http from 'http';
+import https from 'https';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
+const PORT = 3031;
+
+// ── DATABASE ──────────────────────────────────────────
+mkdirSync(join(__dirname, 'data'), { recursive: true });
+const DB_PATH = join(__dirname, 'data', 'diagnosticos.db');
+const db = new DatabaseSync(DB_PATH);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS diagnosticos (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at  TEXT    DEFAULT (datetime('now', 'localtime')),
+        email       TEXT,
+        portfolio   TEXT,
+        quiz_answers TEXT,
+        diagnostico TEXT,
+        nota_interna TEXT,
+        score       INTEGER
+    )
+`);
+
+const stmtInsert = db.prepare(`
+    INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score)
+    VALUES (?, ?, ?, ?, ?)
+`);
+const stmtEmail = db.prepare(`UPDATE diagnosticos SET email = ? WHERE id = ?`);
+
+// ── NASDAQ / CRYPTO HELPERS ───────────────────────────
+const NASDAQ_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Origin': 'https://www.nasdaq.com',
+    'Referer': 'https://www.nasdaq.com/'
+};
+
+function fetchJSON(url, headers = {}) {
+    return new Promise((resolve, reject) => {
+        const u = new URL(url);
+        const req = https.request({
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'GET',
+            headers: { 'Accept': 'application/json', ...headers }
+        }, res => {
+            let data = '';
+            res.on('data', d => data += d);
+            res.on('end', () => {
+                try { resolve(JSON.parse(data)); }
+                catch (e) { reject(new Error('JSON parse error')); }
+            });
+        });
+        req.on('error', reject);
+        req.setTimeout(5000, () => { req.destroy(); reject(new Error('timeout')); });
+        req.end();
+    });
+}
+
+function isCrypto(name) {
+    return /\b(bitcoin|btc|ethereum|eth|solana|sol|bnb|xrp|ripple|cardano|ada|dogecoin|doge|litecoin|ltc|polkadot|dot|avalanche|avax|chainlink|link|uniswap|uni|matic|polygon|usdc|usdt|tether|crypto|token|coin|defi|nft)\b/i.test(name);
+}
+
+async function getCryptoInfo(name) {
+    try {
+        const search = await fetchJSON(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(name)}`, { 'User-Agent': 'Mozilla/5.0' });
+        const coin = (search.coins || [])[0];
+        if (!coin) return null;
+        const price = await fetchJSON(`https://api.coingecko.com/api/v3/simple/price?ids=${coin.id}&vs_currencies=usd&include_24hr_change=true`, { 'User-Agent': 'Mozilla/5.0' });
+        const d = price[coin.id];
+        if (!d) return null;
+        return { name, symbol: coin.symbol.toUpperCase(), type: 'Criptomoneda', exchange: 'Crypto', price: d.usd, change24h: d.usd_24h_change?.toFixed(2) };
+    } catch { return null; }
+}
+
+async function getStockInfo(name) {
+    try {
+        const search = await fetchJSON(`https://api.nasdaq.com/api/autocomplete/slookup/5?search=${encodeURIComponent(name)}`, NASDAQ_HEADERS);
+        const results = search.data || [];
+        if (!results.length) return null;
+        const best = results.find(r => r.asset === 'STOCKS') || results[0];
+        const info = await fetchJSON(`https://api.nasdaq.com/api/quote/${best.symbol}/info?assetclass=${best.asset === 'ETF' ? 'etf' : 'stocks'}`, NASDAQ_HEADERS);
+        const pd = info.data?.primaryData;
+        if (!pd?.lastSalePrice) return null;
+        return { name, symbol: best.symbol, type: best.asset === 'ETF' ? 'ETF' : 'Acción', exchange: best.exchange || 'NASDAQ/NYSE', price: pd.lastSalePrice, change: pd.percentageChange };
+    } catch { return null; }
+}
+
+async function getAssetInfo(name) {
+    if (isCrypto(name)) return await getCryptoInfo(name) || await getStockInfo(name);
+    return await getStockInfo(name) || null;
+}
+
+// ── HELPERS ───────────────────────────────────────────
+function readBody(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', d => body += d);
+        req.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+    });
+}
+
+function jsonRes(res, status, data) {
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+}
+
+// ── SERVER ────────────────────────────────────────────
+http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+
+    try {
+        const body = await readBody(req);
+
+        // ── GUARDAR DIAGNÓSTICO ───────────────────────
+        if (req.url === '/save') {
+            const { portfolio, quizAnswers, diagnostico, notaInterna, score } = body;
+            const result = stmtInsert.run(
+                typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
+                typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
+                diagnostico || '',
+                notaInterna || '',
+                score ?? null
+            );
+            console.log(`[DB] Guardado id=${result.lastInsertRowid}`);
+            return jsonRes(res, 200, { ok: true, id: result.lastInsertRowid });
+        }
+
+        // ── GUARDAR EMAIL ─────────────────────────────
+        if (req.url === '/save-email') {
+            const { id, email } = body;
+            if (!id || !email) return jsonRes(res, 400, { error: 'id y email requeridos' });
+            stmtEmail.run(email.trim(), id);
+            console.log(`[DB] Email id=${id} → ${email}`);
+            return jsonRes(res, 200, { ok: true });
+        }
+
+        // ── PROXY ANTHROPIC ───────────────────────────
+        const { messages, systemPrompt, assetNames } = body;
+        const today = new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        let marketBlock = '';
+        if (assetNames?.length) {
+            const results = await Promise.all(assetNames.map(getAssetInfo));
+            const found = results.filter(Boolean);
+            if (found.length) {
+                marketBlock = `\n\n## DATOS DE MERCADO EN TIEMPO REAL (${today})\nActivos que COTIZAN PÚBLICAMENTE:\n`;
+                found.forEach(a => {
+                    const chg = a.change24h ? ` | 24h: ${parseFloat(a.change24h) >= 0 ? '+' : ''}${a.change24h}%` : a.change ? ` | cambio: ${a.change}` : '';
+                    marketBlock += `- **${a.name}** → ${a.symbol} (${a.exchange}) | ${a.type} | USD ${a.price}${chg}\n`;
+                });
+                marketBlock += `\nNO clasifiques estos activos como privados.\n`;
+                const notFound = assetNames.filter((_, i) => !results[i]);
+                if (notFound.length) marketBlock += `\nActivos no encontrados en bolsa: ${notFound.join(', ')}.\n`;
+            }
+        }
+
+        const systemFinal = `FECHA ACTUAL: ${today}. Tu knowledge cutoff puede no reflejar IPOs recientes. Usá los datos de mercado en tiempo real para clasificar activos.${marketBlock}\n\n${systemPrompt}`;
+
+        const payload = JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 3000,
+            system: systemFinal,
+            messages
+        });
+
+        const apiReq = https.request({
+            hostname: 'api.anthropic.com',
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_KEY,
+                'anthropic-version': '2023-06-01'
+            }
+        }, apiRes => {
+            let data = '';
+            apiRes.on('data', d => data += d);
+            apiRes.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    jsonRes(res, 200, { text: parsed.content?.[0]?.text ?? '' });
+                } catch (e) { jsonRes(res, 500, { error: e.message }); }
+            });
+        });
+        apiReq.on('error', e => jsonRes(res, 500, { error: e.message }));
+        apiReq.write(payload);
+        apiReq.end();
+
+    } catch (e) {
+        jsonRes(res, 400, { error: e.message });
+    }
+}).listen(PORT, () => {
+    console.log(`✓ Proxy en http://localhost:${PORT}`);
+    console.log(`✓ Base de datos: ${DB_PATH}`);
+});

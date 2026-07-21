@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruarte Reports — Últimos Pasos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary:    #0a0a0f;
+            --bg-secondary:  #111118;
+            --bg-card:       #16161f;
+            --gold:          #c9a96e;
+            --gold-light:    #e8c98a;
+            --text-primary:  #f0f0f0;
+            --text-secondary:#a0a0b0;
+            --border:        rgba(201,169,110,0.15);
+            --radius:        12px;
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .logo-img { height: 48px; width: auto; }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 56px 0 40px;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 10px 28px;
+            background: linear-gradient(135deg, #e8000a 0%, #ff1a24 40%, #ff4d55 60%, #e8000a 100%);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            color: #fff;
+            margin-bottom: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 0 18px rgba(255,26,36,0.7), 0 0 40px rgba(255,26,36,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .hero h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+        .hero h1 .highlight {
+            color: var(--gold);
+        }
+        .hero-sub {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
+        }
+
+        /* ===== VIDEO ===== */
+        .video-section { padding: 0 0 56px; }
+        .video-wrapper {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(201,169,110,0.12), 0 24px 60px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            background: #000;
+        }
+        .video-wrapper video {
+            width: 100%;
+            display: block;
+            max-height: 520px;
+            background: #000;
+        }
+
+        /* ===== LOGOS ===== */
+        .logos-section {
+            padding: 64px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .section-tag {
+            display: inline-block;
+            padding: 4px 16px;
+            border: 1px solid var(--gold);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        .logos-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+        .logos-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            max-width: 580px;
+            margin: 0 auto 48px;
+            text-align: left;
+        }
+
+        /* Logo carousel */
+        .logo-carousel-wrap {
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+            mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+        }
+        .logo-track {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            width: max-content;
+            animation: logoScroll 28s linear infinite;
+        }
+        .logo-track:hover { animation-play-state: paused; }
+        @keyframes logoScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        .logo-item img {
+            height: 44px;
+            width: auto;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .logo-item img:hover { opacity: 1; }
+
+        /* ===== TRACK RECORD ===== */
+        .track-section {
+            padding: 64px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .track-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .track-section h2 .accent { color: var(--gold); text-decoration: underline; }
+        .track-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+        }
+        .track-imgs {
+            width: 100%;
+            max-width: 840px;
+            height: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        /* ===== FAQ ===== */
+        .faq-section {
+            padding: 64px 0;
+            border-top: 1px solid var(--border);
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .section-header h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 800;
+            margin-top: 12px;
+        }
+        .faq-list { display: flex; flex-direction: column; gap: 12px; }
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .faq-item.open { border-color: rgba(201,169,110,0.4); }
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            user-select: none;
+            gap: 16px;
+        }
+        .faq-icon {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            color: var(--gold);
+            transition: transform 0.3s;
+        }
+        .faq-item.open .faq-icon { transform: rotate(45deg); }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .faq-answer-inner {
+            padding: 0 24px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 28px 0;
+            text-align: center;
+        }
+        .footer p { color: var(--text-secondary); font-size: 0.82rem; }
+
+        /* ===== ANIMATE ===== */
+        .animate {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .animate.visible { opacity: 1; transform: translateY(0); }
+        .animate-delay-1 { transition-delay: 0.1s; }
+        .animate-delay-2 { transition-delay: 0.2s; }
+        .animate-delay-3 { transition-delay: 0.3s; }
+
+        /* ===== TRACK RECORD CARD ===== */
+        .track-section h2 { font-family: 'Montserrat', sans-serif; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; margin-top: 12px; margin-bottom: 32px; }
+        .track-section h2 .accent { color: var(--gold); text-decoration: none; }
+
+        .track-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tr-info-box {
+            background: rgba(201,169,110,0.08);
+            border-left: 4px solid var(--gold);
+            border-radius: 6px;
+            padding: 14px 18px;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .tr-quote {
+            border-left: 3px solid #3a7bd5;
+            padding: 10px 18px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .tr-years {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            text-align: center;
+        }
+        .tr-year-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .tr-year-val {
+            font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+            font-weight: 800;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .tr-year-val.positive { color: #22c55e; }
+        .tr-year-val.negative { color: #ef4444; }
+
+        .tr-table-wrap { overflow-x: hidden; }
+        .tr-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            table-layout: fixed;
+        }
+        .tr-table thead tr { background: #1a1a2e; }
+        .tr-table th {
+            padding: 7px 3px;
+            text-align: center;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 0.65rem;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        .tr-table th:first-child { width: 8%; }
+        .tr-table th.ytd { color: var(--gold); width: 9%; }
+        .tr-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tr-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+        .tr-table td {
+            padding: 6px 2px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.67rem;
+            white-space: nowrap;
+        }
+        .tr-table td.year { font-weight: 700; color: var(--text-primary); font-size: 0.72rem; }
+        .tr-table td.pos  { color: #22c55e; }
+        .tr-table td.neg  { color: #ef4444; }
+        .tr-table td.ytd  { font-weight: 700; font-size: 0.72rem; }
+
+        .tr-disclaimer {
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            padding: 14px 18px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .tr-years { grid-template-columns: repeat(2, 1fr); }
+            .track-card { padding: 16px 12px; gap: 18px; }
+            .tr-table { font-size: 0.58rem; }
+            .tr-table th { font-size: 0.55rem; padding: 5px 2px; }
+            .tr-table td { font-size: 0.56rem; padding: 5px 1px; }
+            .tr-table td.year { font-size: 0.6rem; }
+            .tr-table td.ytd  { font-size: 0.6rem; }
+        }
+
+        @media (max-width: 768px) {
+            .logos-section h2 { font-size: 1.2rem; }
+            .track-section h2 { font-size: 1.5rem; }
+            .section-header h2 { font-size: 1.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 14px; }
+
+            /* Header */
+            .header { padding: 12px 0; }
+            .logo-img { height: 28px; }
+
+            /* Hero */
+            .hero { padding: 32px 0 20px; }
+            .hero-badge { font-size: 0.72rem; padding: 8px 14px; letter-spacing: 0; }
+
+            /* Video */
+            .video-section { padding: 0 0 36px; }
+            .video-wrapper { border-radius: 10px; }
+
+            /* Logos */
+            .logos-section { padding: 44px 0; }
+            .logos-section h2 { font-size: 1rem; }
+            .logos-section p { font-size: 0.72rem; }
+            .logo-item img { height: 32px; }
+            .logo-carousel-wrap { margin-top: 28px; }
+
+            /* Track record */
+            .track-section { padding: 44px 0; }
+            .track-section h2 { font-size: 1.3rem; margin-bottom: 20px; }
+            .track-card { padding: 16px 12px; gap: 16px; }
+            .tr-info-box, .tr-quote { font-size: 0.82rem; padding: 10px 14px; }
+            .tr-disclaimer { font-size: 0.74rem; padding: 10px 14px; }
+
+            /* FAQ */
+            .faq-section { padding: 44px 0; }
+            .section-header { margin-bottom: 24px; }
+            .section-header h2 { font-size: 1.3rem; }
+            .faq-question { padding: 14px 16px; font-size: 0.88rem; }
+            .faq-answer-inner { padding: 0 16px 16px; font-size: 0.85rem; }
+
+            /* Footer */
+            .footer { padding: 20px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header" data-block="header">
+        <div class="container">
+            <img src="logo-rr.png" alt="Ruarte Reports" class="logo-img">
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" data-block="hero">
+        <div class="container">
+            <div class="animate">
+                <div class="hero-badge" id="hero-badge">¡Felicidades! Importante que veas el siguiente video 👇</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIDEO -->
+    <section class="video-section" data-block="video">
+        <div class="container">
+            <div class="video-wrapper animate">
+                <video controls preload="metadata" poster="https://assets.cdn.filesafe.space/KtUHW6Xfym4HTBF8Ujq8/media/transcoded_videos/25e8fedf01b5178b.jpg">
+                    <source src="https://assets.cdn.filesafe.space/KtUHW6Xfym4HTBF8Ujq8/media/69c146bd6f101754392753da.mov" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <!-- LOGOS -->
+    <section class="logos-section" data-block="logos">
+        <div class="container">
+            <div class="animate">
+                <span class="section-tag">Confianza institucional</span>
+                <h2 id="logos-h2">Ayudamos a las Principales<br>Instituciones Financieras del <span style="color:var(--gold)">MUNDO</span></h2>
+                <p id="logos-p">Hemos asesorado a <strong>bancos, brokers, universidades y empresas líderes</strong> en América, consolidando una reputación de excelencia y confiabilidad.</p>
+            </div>
+            <div class="logo-carousel-wrap animate animate-delay-1">
+                <div class="logo-track">
+                    <!-- set 1 -->
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b677e5eaaf7.png" alt="Tecnológico de Monterrey"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b12a75eaaf8.png" alt="Ámbito"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b83fd5eaaf6.png" alt="Santander"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7ddf88e1e61e82a0b5d4.png" alt="Banco Hipotecario"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde5e13ec4738182031.png" alt="Banco Patagonia"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/69125919b0326a9a7a5bbe29.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/6912591940d0247fbff1e23c.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/6912591940d0246c7af1e23b.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde8273687f9dd740b5.webp" alt=""></div>
+                    <!-- set 2 (duplicate for infinite loop) -->
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b677e5eaaf7.png" alt="Tecnológico de Monterrey"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b12a75eaaf8.png" alt="Ámbito"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde59e47b83fd5eaaf6.png" alt="Santander"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7ddf88e1e61e82a0b5d4.png" alt="Banco Hipotecario"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde5e13ec4738182031.png" alt="Banco Patagonia"></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/69125919b0326a9a7a5bbe29.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/6912591940d0247fbff1e23c.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/6912591940d0246c7af1e23b.png" alt=""></div>
+                    <div class="logo-item"><img src="https://storage.googleapis.com/msgsndr/KtUHW6Xfym4HTBF8Ujq8/media/691e7dde8273687f9dd740b5.webp" alt=""></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRACK RECORD -->
+    <section class="track-section" data-block="track">
+        <div class="container">
+            <div class="animate">
+                <span class="section-tag">Historial verificable</span>
+                <h2 id="track-h2"><strong>Performance</strong> <span class="accent">Mensual</span></h2>
+            </div>
+
+            <div class="track-card animate animate-delay-1">
+
+                <!-- Info box -->
+                <div class="tr-info-box">
+                    <strong>Resultados de nuestra tesis anterior: Argentina (2021).</strong> Nuestra tesis actual es la de Commodities, la oportunidad que vemos hasta 2031.
+                </div>
+
+                <!-- Strategy quote -->
+                <div class="tr-quote">
+                    Generar retornos absolutos mediante la identificación de ciclos macroeconómicos estructurales. La estrategia capitaliza la rotación global de capital hacia commodities y divisas de valor.
+                </div>
+
+                <!-- Annual highlights -->
+                <div class="tr-years">
+                    <div class="tr-year-item">
+                        <div class="tr-year-label">2022</div>
+                        <div class="tr-year-val positive">+68.17%</div>
+                    </div>
+                    <div class="tr-year-item">
+                        <div class="tr-year-label">2023</div>
+                        <div class="tr-year-val positive">+342.80%</div>
+                    </div>
+                    <div class="tr-year-item">
+                        <div class="tr-year-label">2024</div>
+                        <div class="tr-year-val positive">+131.34%</div>
+                    </div>
+                    <div class="tr-year-item">
+                        <div class="tr-year-label">2025</div>
+                        <div class="tr-year-val positive">+26.04%</div>
+                    </div>
+                </div>
+
+                <!-- Monthly table -->
+                <div class="tr-table-wrap">
+                    <table class="tr-table">
+                        <thead>
+                            <tr>
+                                <th>Año</th><th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th><th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th><th class="ytd">YTD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="year">2022</td>
+                                <td>—</td><td class="pos">0.00%</td><td class="pos">2.57%</td><td class="neg">-0.08%</td><td class="pos">2.48%</td><td class="neg">-10.59%</td><td class="pos">32.29%</td><td class="pos">2.39%</td><td class="pos">0.27%</td><td class="pos">2.63%</td><td class="pos">11.24%</td><td class="pos">15.50%</td>
+                                <td class="ytd pos">68.17%</td>
+                            </tr>
+                            <tr>
+                                <td class="year">2023</td>
+                                <td class="pos">22.50%</td><td class="neg">-2.07%</td><td class="pos">0.35%</td><td class="pos">9.54%</td><td class="pos">14.51%</td><td class="pos">29.61%</td><td class="pos">9.25%</td><td class="pos">34.14%</td><td class="neg">-7.74%</td><td class="pos">6.90%</td><td class="pos">36.36%</td><td class="pos">14.80%</td>
+                                <td class="ytd pos">342.80%</td>
+                            </tr>
+                            <tr>
+                                <td class="year">2024</td>
+                                <td class="pos">28.49%</td><td class="neg">-15.47%</td><td class="pos">14.03%</td><td class="pos">5.13%</td><td class="pos">19.00%</td><td class="neg">-4.27%</td><td class="neg">-2.33%</td><td class="pos">10.38%</td><td class="pos">1.56%</td><td class="pos">7.30%</td><td class="pos">22.30%</td><td class="pos">8.55%</td>
+                                <td class="ytd pos">131.34%</td>
+                            </tr>
+                            <tr>
+                                <td class="year">2025</td>
+                                <td class="neg">-0.69%</td><td class="neg">-9.70%</td><td class="pos">7.68%</td><td class="neg">-12.87%</td><td class="pos">11.44%</td><td class="neg">-7.82%</td><td class="pos">15.79%</td><td class="neg">-9.39%</td><td class="neg">-5.58%</td><td class="pos">37.13%</td><td class="pos">6.27%</td><td class="pos">1.02%</td>
+                                <td class="ytd pos">26.04%</td>
+                            </tr>
+                            <tr>
+                                <td class="year">2026</td>
+                                <td class="pos">2.96%</td><td class="neg">-13.28%</td><td class="pos">11.77%</td><td class="neg">-0.25%</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                <td class="ytd neg">-0.45%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="tr-disclaimer">
+                    <strong>DISCLAIMER</strong><br>
+                    La operativa activa implica riesgos. Rentabilidades pasadas no garantizan resultados futuros. Resultados de nuestra anterior tesis (Argentina - 2021) disponibles mediante link de track record auditado.
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section" data-block="faq">
+        <div class="container">
+            <div class="section-header animate">
+                <span class="section-tag">Preguntas frecuentes</span>
+                <h2 id="faq-h2">Todo lo que necesitás saber</h2>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item animate">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span id="faq1-q">¿A quién está dirigido este programa?</span>
+                        <div class="faq-icon">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" id="faq1-a">
+                            Está diseñado para traders, inversores o empresarios que ya tienen capital o experiencia en los mercados, pero que aún no logran mantener resultados estables. También es ideal para quienes quieren estructurar su operativa o portafolio con mentalidad profesional, mejorar su gestión del riesgo y construir un sistema predecible de crecimiento financiero.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item animate animate-delay-1">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span id="faq2-q">¿En qué consiste exactamente la consultoría?</span>
+                        <div class="faq-icon">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" id="faq2-a">
+                            Es un proceso personalizado de acompañamiento estratégico, donde trabajamos sobre tres pilares:<br><br>
+                            <strong>Estrategia:</strong> análisis de tu perfil, sistemas y decisiones actuales.<br>
+                            <strong>Gestión:</strong> estructura de capital, riesgo, métricas y consistencia.<br>
+                            <strong>Mentalidad:</strong> bloqueos emocionales, disciplina y toma de decisiones bajo presión.<br><br>
+                            Todo se adapta a tu contexto, tus objetivos y tu disponibilidad de tiempo.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item animate animate-delay-2">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span id="faq3-q">¿Necesito experiencia previa en trading o inversión?</span>
+                        <div class="faq-icon">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" id="faq3-a">
+                            No necesariamente. El programa tiene diferentes niveles según tu punto de partida. Si ya operás, te ayudamos a profesionalizar tu enfoque y a sistematizar tus resultados. Si sos nuevo en el mundo de las inversiones, te damos la estructura mental, técnica y estratégica para que empieces con bases sólidas y evites los errores más comunes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" data-block="footer">
+        <div class="container">
+            <p id="footer-text">© 2026 Ruarte's Reports. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.12 });
+        document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+
+        // FAQ toggle
+        function toggleFaq(el) {
+            const item = el.closest('.faq-item');
+            const answer = item.querySelector('.faq-answer');
+            const isOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item.open').forEach(i => {
+                i.classList.remove('open');
+                i.querySelector('.faq-answer').style.maxHeight = null;
+            });
+            if (!isOpen) {
+                item.classList.add('open');
+                answer.style.maxHeight = answer.scrollHeight + 'px';
+            }
+        }
+    </script>
+</body>
+</html>
