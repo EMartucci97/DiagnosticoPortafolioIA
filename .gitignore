@@ -9,3 +9,5 @@ node_modules/
 skills-lock.json
 
 /generated/prisma
+.vercel
+.env*

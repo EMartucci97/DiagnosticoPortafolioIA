@@ -12,15 +12,16 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
+    const { id } = req.body || {};
+    if (!id) { res.status(400).json({ error: 'Falta id' }); return; }
+
     try {
-        const { id, email, nombre, apellido, celular, canal } = req.body;
-        if (!id || !email) { res.status(400).json({ error: 'id y email requeridos' }); return; }
         await pool.query(
-            `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
-            [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), canal === 'outbound' ? 'outbound' : (canal === 'inbound' ? 'inbound' : null), id]
+            `UPDATE diagnosticos SET wa_click_at = NOW() WHERE id = $1`,
+            [id]
         );
         res.status(200).json({ ok: true });
-    } catch(e) {
+    } catch (e) {
         res.status(500).json({ error: e.message });
     }
 };

@@ -117,16 +117,17 @@ http.createServer(async (req, res) => {
 
         // ── GUARDAR DIAGNÓSTICO ───────────────────────
         if (req.url === '/save') {
-            const { portfolio, quizAnswers, diagnostico, notaInterna, score } = body;
+            const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal } = body;
             const { rows } = await pool.query(
-                `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score)
-                 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+                `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal)
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
                 [
                     typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
                     typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
                     diagnostico || '',
                     notaInterna || '',
-                    score ?? null
+                    score ?? null,
+                    canal === 'outbound' ? 'outbound' : 'inbound'
                 ]
             );
             const id = rows[0].id;
@@ -136,10 +137,13 @@ http.createServer(async (req, res) => {
 
         // ── GUARDAR EMAIL ─────────────────────────────
         if (req.url === '/save-email') {
-            const { id, email } = body;
+            const { id, email, nombre, apellido, celular, canal } = body;
             if (!id || !email) return jsonRes(res, 400, { error: 'id y email requeridos' });
-            await pool.query(`UPDATE diagnosticos SET email = $1 WHERE id = $2`, [email.trim(), id]);
-            console.log(`[DB] Email id=${id} → ${email}`);
+            await pool.query(
+                `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
+                [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), canal === 'outbound' ? 'outbound' : (canal === 'inbound' ? 'inbound' : null), id]
+            );
+            console.log(`[DB] Datos id=${id} → ${email}`);
             return jsonRes(res, 200, { ok: true });
         }
 

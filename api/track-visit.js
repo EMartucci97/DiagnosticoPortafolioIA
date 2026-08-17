@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { createHash } = require('crypto');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -12,15 +13,19 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
+    const rawIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+        || req.headers['x-real-ip']
+        || 'unknown';
+
+    const ip_hash = createHash('sha256').update(rawIp).digest('hex');
+
     try {
-        const { id, email, nombre, apellido, celular, canal } = req.body;
-        if (!id || !email) { res.status(400).json({ error: 'id y email requeridos' }); return; }
         await pool.query(
-            `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
-            [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), canal === 'outbound' ? 'outbound' : (canal === 'inbound' ? 'inbound' : null), id]
+            `INSERT INTO visits (ip_hash, visited_at) VALUES ($1, NOW())`,
+            [ip_hash]
         );
         res.status(200).json({ ok: true });
-    } catch(e) {
+    } catch (e) {
         res.status(500).json({ error: e.message });
     }
 };

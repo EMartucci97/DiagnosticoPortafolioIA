@@ -168,8 +168,15 @@
             font-size: clamp(1rem, 2.5vw, 1.15rem);
             font-weight: 600;
             color: var(--text);
-            margin-bottom: 28px;
+            margin-bottom: 8px;
             line-height: 1.45;
+        }
+        #quiz-multiselect-hint {
+            font-size: 0.76rem;
+            color: var(--gold);
+            opacity: 0.85;
+            margin-bottom: 22px;
+            letter-spacing: 0.01em;
         }
 
         @keyframes fadeUp {
@@ -277,6 +284,74 @@
             0%, 80%, 100% { transform: translateY(0); }
             40%           { transform: translateY(-7px); }
         }
+        .verification-card {
+            background: #16161f;
+            border: 1px solid #c9a96e55;
+            border-radius: 12px;
+            padding: 16px 18px;
+            text-align: left;
+        }
+        .verification-card-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #c9a96e;
+            margin-bottom: 10px;
+        }
+        .verification-card-body {
+            font-size: 0.84rem;
+            color: #a0a0b8;
+            line-height: 1.65;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .verification-card-body p { margin: 0 0 8px; }
+        .verification-card-body strong { color: #d0d0e0; }
+        .verification-card-hint {
+            font-size: 0.78rem;
+            color: #505068;
+            margin-top: 12px;
+            text-align: center;
+        }
+        .verif-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: #707088;
+            margin-bottom: 8px;
+        }
+        .verif-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .verif-chip {
+            background: #111118;
+            border: 1px solid #2a2a3a;
+            color: #a0a0b8;
+            padding: 7px 15px;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .verif-chip:hover { border-color: #c9a96e55; color: #d0d0e0; }
+        .verif-chip.selected { background: #c9a96e18; border-color: #c9a96e; color: #c9a96e; font-weight: 600; }
+        .verif-submit {
+            width: 100%;
+            background: #c9a96e;
+            color: #0a0a0f;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 18px;
+            transition: opacity 0.15s;
+        }
+        .verif-submit:disabled { opacity: 0.35; cursor: not-allowed; }
 
         #quiz-input-row {
             display: none;
@@ -512,7 +587,7 @@
         #report-cta a:hover { opacity: 0.88; }
 
         /* ── EMAIL GATE ─────────────────────────── */
-        #email-gate {
+        #email-gate, #outbound-thanks {
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -555,7 +630,7 @@
             gap: 10px;
             margin-bottom: 14px;
         }
-        .email-gate-row input[type="email"] {
+        .email-gate-row input {
             width: 100%;
             padding: 15px 18px;
             background: var(--bg);
@@ -568,8 +643,8 @@
             transition: border-color 0.2s;
             box-sizing: border-box;
         }
-        .email-gate-row input[type="email"]:focus { border-color: var(--gold); }
-        .email-gate-row input[type="email"]::placeholder { color: var(--text3); }
+        .email-gate-row input:focus { border-color: var(--gold); }
+        .email-gate-row input::placeholder { color: var(--text3); }
         .email-gate-btn {
             width: 100%;
             padding: 16px;
@@ -1064,6 +1139,7 @@
             <button id="quiz-fwd-btn" onclick="quizGoForward()" style="display:none">Siguiente →</button>
         </div>
         <div id="quiz-question-text"></div>
+        <div id="quiz-multiselect-hint" style="display:none">Podés seleccionar más de una</div>
         <div id="quiz-input-row">
             <div id="file-preview" class="hidden">
                 <img id="file-thumb" src="" alt="preview">
@@ -1082,6 +1158,9 @@
         <div id="quiz-options"></div>
         <button id="quiz-continue-btn"></button>
         <div id="quiz-loading"><div class="quiz-dots"><span></span><span></span><span></span></div></div>
+        <div id="quiz-verification-actions" style="display:none;margin-top:24px;text-align:center">
+            <button id="edit-portfolio-btn" onclick="goBackToPortfolio()" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:12px 28px;border-radius:10px;font-size:0.95rem;cursor:pointer;">← Editar portafolio</button>
+        </div>
     </div>
 </section>
 
@@ -1147,7 +1226,7 @@
     <div id="report-content" class="md"></div>
     <div id="report-cta" style="display:none">
         <p id="cta-text"></p>
-        <a id="wa-btn" href="#" target="_blank"><span id="cta-btn-text">📲 Agendar una sesión</span></a>
+        <a id="wa-btn" href="#" target="_blank"><span id="cta-btn-text">Comunicarme con Roberto Ruarte</span></a>
     </div>
 </section>
 
@@ -1155,9 +1234,15 @@
     <div class="email-gate-inner">
         <div class="email-gate-check">✓</div>
         <h2 class="email-gate-title">Tu diagnóstico está listo</h2>
-        <p class="email-gate-sub">Dejanos tu mejor mail y te lo enviamos ahora.</p>
+        <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y te lo enviamos ahora.</p>
         <div class="email-gate-row">
+            <input type="text" id="diag-nombre" placeholder="Nombre" autocomplete="given-name"
+                onkeydown="if(event.key==='Enter') document.getElementById('diag-apellido').focus()">
+            <input type="text" id="diag-apellido" placeholder="Apellido" autocomplete="family-name"
+                onkeydown="if(event.key==='Enter') document.getElementById('diag-email').focus()">
             <input type="email" id="diag-email" placeholder="tu@email.com" autocomplete="email"
+                onkeydown="if(event.key==='Enter') document.getElementById('diag-celular').focus()">
+            <input type="tel" id="diag-celular" placeholder="Celular (+cód. país)" autocomplete="tel"
                 onkeydown="if(event.key==='Enter') submitEmail()">
             <button class="email-gate-btn" onclick="submitEmail()" id="email-submit-btn">Ver diagnóstico →</button>
         </div>
@@ -1165,10 +1250,25 @@
     </div>
 </section>
 
+<section id="outbound-thanks" style="display:none">
+    <div class="email-gate-inner">
+        <div class="email-gate-check">✓</div>
+        <h2 class="email-gate-title">¡Listo, ya tenemos tus datos!</h2>
+        <p class="email-gate-sub">Tu diagnóstico fue generado y uno de nuestros consultores te va a llamar para repasarlo con vos en tu sesión.</p>
+        <p class="email-gate-note">Guardá tu teléfono a mano — te contactamos a la brevedad.</p>
+    </div>
+</section>
+
 <script>
 // ── CONFIG ─────────────────────────────────────────
 const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
-const WHATSAPP_NUMBER   = 'TU_NUMERO_WHATSAPP'; // ← reemplazar, ej: '5491112345678'
+const WHATSAPP_LINK     = 'https://wa.link/amvekl';
+const LEAD_CANAL        = new URLSearchParams(window.location.search).get('canal') === 'outbound' ? 'outbound' : 'inbound';
+
+// Trackear visita única al cargar (solo en producción)
+if (window.location.hostname !== 'localhost') {
+    fetch(API_ENDPOINT + '/track-visit', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+}
 const WEBHOOK_URL       = 'TU_WEBHOOK_URL_AQUI'; // ← endpoint n8n / Make
 
 // ── SYSTEM PROMPT (Ruarte Reports) ────────────────
@@ -1190,12 +1290,20 @@ El diagnóstico debe sentirse profesional, claro y directo. Debe aportar valor r
 Antes de analizar cualquier activo mencionado por el usuario, verificá su condición bursátil basándote en tu conocimiento:
 
 - **Empresa cotizante en bolsa (pública):** tiene ticker, precio de mercado diario, liquidez en mercados regulados. Ejemplos: NVDA, TSMC (TSM), Apple (AAPL), Bitcoin (BTC), ETFs.
-- **Empresa privada (no cotizante):** no tiene ticker público, no hay precio diario de mercado, liquidez prácticamente inexistente salvo eventos especiales (IPO, venta secundaria). Ejemplos: Palantir antes de 2020, empresas de private equity.
+- **Empresa privada (no cotizante):** no tiene ticker público. Ejemplos: SpaceX, Stripe, empresas de private equity.
 - **Activo alternativo ilíquido:** real estate, startups, fondos cerrados, etc.
 
-**IMPORTANTE — Conocimiento desactualizado:** Tu entrenamiento tiene fecha de corte. Muchos activos que antes eran privados pueden haber hecho IPO o cambiado de estatus desde entonces (por ejemplo, SpaceX ya cotiza en bolsa). Si el usuario menciona tener un activo en cartera con acceso vía broker convencional, asumí que su clasificación puede haber cambiado y NO lo trates como empresa privada sin confirmar. Ante la duda, preguntá "¿A través de qué broker o plataforma lo tenés?" en lugar de asumir que es inaccesible o privado.
+**Regla de clasificación:**
+- Si tenés información concreta sobre el activo (sabés su sector, su negocio, su tipo de instrumento) → clasificalo y analizá directamente.
+- Si el nombre del activo NO te dice nada concreto (empresa que no podés identificar, nombre inventado, ticker inexistente, fondo oscuro del que no tenés datos) y representa MENOS del 5% del portafolio → ignoralo, mencionalo como "(activo no identificado — posición menor excluida del análisis)" y continuá normalmente.
+- Si el nombre del activo NO te dice nada concreto y representa el 5% O MÁS del portafolio → respondé ÚNICAMENTE con este formato exacto, sin agregar nada más:
 
-**Regla:** En el diagnóstico, cada activo debe ser clasificado correctamente. Si tenés certeza de que un activo NO cotiza en mercados públicos, señalalo. Si tenés dudas por posibles cambios post-entrenamiento, usá la respuesta del usuario para confirmarlo antes de clasificar.
+VERIFICAR_ACTIVO
+nombre: [nombre exacto del activo como lo escribió el usuario]
+porcentaje: [número aproximado del porcentaje]
+
+Ejemplos de activos que deben disparar VERIFICAR_ACTIVO: "Braxum Capital Holdings", "tumadre", "XYZQ Fund", cualquier empresa/fondo que no podés identificar con certeza.
+Ejemplos de activos que NO deben disparar VERIFICAR_ACTIVO: SpaceX (empresa privada conocida), AAPL, BTC, cualquier activo que sí reconocés aunque sea privado.
 
 ---
 
@@ -1885,6 +1993,7 @@ let questionCount  = 0;
 let maxQuestions   = 12;
 let initStep       = 0;
 let selectedOptions = [];
+let currentQuestionMultiSelect = false;
 let initAnswers    = {};
 let objetivoSeleccionado = '';
 let resultadoSeleccionado = '';
@@ -1968,13 +2077,15 @@ const QUIZ_QUESTIONS = [
     },
     {
         q: '¿Cuál es tu mayor preocupación con tu portafolio hoy?',
+        multiSelect: true,
         opts: [
             { letter: 'A', text: 'No sé si está bien armado' },
             { letter: 'B', text: 'Creo que tengo demasiado riesgo' },
             { letter: 'C', text: 'Rinde menos de lo que esperaba' },
             { letter: 'D', text: 'Tengo pérdidas y no sé qué hacer' },
             { letter: 'E', text: 'No sé cuándo entrar o salir' },
-            { letter: 'F', text: 'Tengo activos pero no una estrategia clara' }
+            { letter: 'F', text: 'Tengo activos pero no una estrategia clara' },
+            { letter: 'G', text: 'Todas las respuestas anteriores', allOf: true }
         ]
     },
     {
@@ -1998,6 +2109,13 @@ const QUIZ_QUESTIONS = [
 function startChat() {
     if (chatStarted) return;
     chatStarted = true;
+    if (window.location.hostname !== 'localhost') {
+        fetch(API_ENDPOINT + '/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'cta_start' })
+        }).catch(() => {});
+    }
     initStep = 2;
     maxQuestions = 12;
     document.getElementById('hero').style.display = 'none';
@@ -2021,21 +2139,23 @@ function showStaticQuestion(index) {
         inputRow.style.display = 'none';
     }
 
-    showQuestion({ question: q.q, options: q.opts || [] });
+    showQuestion({ question: q.q, options: q.opts || [], multiSelect: !!q.multiSelect });
 
     // Override back/fwd after showQuestion renders them
     document.getElementById('quiz-back-btn').style.display = index > 0 ? 'inline-block' : 'none';
     const canFwd = index < QUIZ_QUESTIONS.length - 1 && quizAnswers[index] != null;
     document.getElementById('quiz-fwd-btn').style.display = canFwd ? 'inline-block' : 'none';
 
-    // Restore previously selected option
+    // Restore previously selected option(s)
     if (!q.open && quizAnswers[index]) {
-        const savedLetter = quizAnswers[index].letter;
+        const savedLetter = quizAnswers[index].letter || '';
+        const savedLetters = savedLetter.split(',').map(l => l.trim());
+        selectedOptions = [];
         document.querySelectorAll('#quiz-options .quiz-option').forEach(btn => {
             const letterSpan = btn.querySelector('.opt-letter');
-            if (letterSpan && savedLetter && savedLetter.includes(letterSpan.textContent)) {
+            if (letterSpan && savedLetters.includes(letterSpan.textContent)) {
                 btn.classList.add('selected');
-                selectedOptions = [{ letter: letterSpan.textContent, text: btn.querySelector('span:last-child').textContent }];
+                selectedOptions.push({ letter: letterSpan.textContent, text: btn.querySelector('span:last-child').textContent });
             }
         });
         const cb = document.getElementById('quiz-continue-btn');
@@ -2049,7 +2169,11 @@ function showQuestion(qData) {
 
     const stepEl     = document.getElementById('quiz-step-label');
     const questionEl = document.getElementById('quiz-question-text');
+    const hintEl     = document.getElementById('quiz-multiselect-hint');
     const optionsEl  = document.getElementById('quiz-options');
+
+    currentQuestionMultiSelect = !!qData.multiSelect;
+    hintEl.style.display = currentQuestionMultiSelect ? 'block' : 'none';
 
     questionEl.style.opacity = '0';
     optionsEl.style.opacity  = '0';
@@ -2073,8 +2197,9 @@ function showQuestion(qData) {
             qData.options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'quiz-option';
+                if (opt.allOf) btn.dataset.allof = '1';
                 btn.innerHTML = '<span class="opt-letter">' + opt.letter + '</span><span>' + opt.text + '</span>';
-                btn.onclick = () => toggleOption(btn, opt.letter, opt.text);
+                btn.onclick = () => toggleOption(btn, opt.letter, opt.text, !!opt.allOf);
                 optionsEl.appendChild(btn);
             });
         } else {
@@ -2104,25 +2229,71 @@ function quizGoForward() {
     }
 }
 
-// ── TOGGLE OPTION (single-select) ──────────────────────────────────────
-function toggleOption(btn, letter, text) {
-    // deselect any previously selected option
-    document.querySelectorAll('#quiz-options .quiz-option.selected').forEach(el => el.classList.remove('selected'));
-    selectedOptions = [];
+// ── TOGGLE OPTION ──────────────────────────────────────────────────────
+function toggleOption(btn, letter, text, isAllOf) {
+    const allBtns = Array.from(document.querySelectorAll('#quiz-options .quiz-option'));
+    const continueBtn = document.getElementById('quiz-continue-btn');
 
-    // if clicking the same option again, deselect (toggle off)
-    if (btn.classList.contains('selected')) {
-        btn.classList.remove('selected');
-        document.getElementById('quiz-continue-btn').classList.remove('visible');
+    if (!currentQuestionMultiSelect) {
+        // ── single-select ──
+        allBtns.forEach(el => el.classList.remove('selected'));
+        selectedOptions = [];
+        if (btn.classList.contains('selected')) {
+            btn.classList.remove('selected');
+            continueBtn.classList.remove('visible');
+            return;
+        }
+        btn.classList.add('selected');
+        selectedOptions = [{ letter, text }];
+        continueBtn.textContent = 'Confirmar →';
+        continueBtn.classList.add('visible');
         return;
     }
 
-    btn.classList.add('selected');
-    selectedOptions = [{ letter, text }];
+    // ── multi-select ──
+    if (isAllOf) {
+        const allSelected = btn.classList.contains('selected');
+        if (allSelected) {
+            // deselect all
+            allBtns.forEach(el => el.classList.remove('selected'));
+            selectedOptions = [];
+            continueBtn.classList.remove('visible');
+        } else {
+            // select all
+            allBtns.forEach(el => el.classList.add('selected'));
+            selectedOptions = allBtns.map(el => ({
+                letter: el.querySelector('.opt-letter').textContent,
+                text:   el.querySelector('span:last-child').textContent
+            }));
+            continueBtn.textContent = 'Confirmar →';
+            continueBtn.classList.add('visible');
+        }
+        return;
+    }
 
-    const continueBtn = document.getElementById('quiz-continue-btn');
-    continueBtn.textContent = 'Confirmar →';
-    continueBtn.classList.add('visible');
+    // individual option in multi-select
+    const allOfBtn = allBtns.find(el => el.dataset.allof === '1');
+    if (allOfBtn && allOfBtn.classList.contains('selected')) {
+        // deselect "Todas" when user picks individual
+        allOfBtn.classList.remove('selected');
+        selectedOptions = selectedOptions.filter(o => o.letter !== allOfBtn.querySelector('.opt-letter').textContent);
+    }
+
+    const alreadySelected = btn.classList.contains('selected');
+    if (alreadySelected) {
+        btn.classList.remove('selected');
+        selectedOptions = selectedOptions.filter(o => o.letter !== letter);
+    } else {
+        btn.classList.add('selected');
+        selectedOptions.push({ letter, text });
+    }
+
+    if (selectedOptions.length === 0) {
+        continueBtn.classList.remove('visible');
+    } else {
+        continueBtn.textContent = 'Confirmar →';
+        continueBtn.classList.add('visible');
+    }
 }
 
 
@@ -2650,6 +2821,13 @@ function submitPortfolio() {
     }
 
     portfolioMessage = lines.join('\n');
+    if (window.location.hostname !== 'localhost') {
+        fetch(API_ENDPOINT + '/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'portfolio_submitted' })
+        }).catch(() => {});
+    }
     document.getElementById('portfolio-step').classList.remove('active');
     document.getElementById('quiz-section').classList.add('active');
     startStaticQuiz();
@@ -2693,6 +2871,106 @@ function confirmStaticAnswer() {
     }
 }
 
+// ── VERIFICACIÓN: detecta si Claude devolvió un diagnóstico real o un marcador de verificación ──
+function isRealDiagnostic(text) {
+    return /Score de riesgo|Puntos d[ée]biles|Incongruencias detectadas/i.test(text);
+}
+
+function parseVerificationRequest(text) {
+    if (!text.trim().startsWith('VERIFICAR_ACTIVO')) return null;
+    const nombreMatch = text.match(/nombre:\s*(.+)/i);
+    const pctMatch    = text.match(/porcentaje:\s*(\d+)/i);
+    return {
+        nombre: nombreMatch ? nombreMatch[1].trim() : '?',
+        pct:    pctMatch    ? parseInt(pctMatch[1]) : null
+    };
+}
+
+let verifSelections = { type: null, sector: null };
+
+function showVerification(text) {
+    hideLoading();
+    const verif = parseVerificationRequest(text);
+    if (verif) {
+        showVerificationForm(verif);
+    } else {
+        // Nombre sin sentido o ticker inexistente → pedir que edite el portafolio
+        document.getElementById('quiz-step-label').textContent = 'VERIFICACIÓN REQUERIDA';
+        document.getElementById('quiz-question-text').innerHTML = `
+            <div class="verification-card">
+                <div class="verification-card-title">⚠ No pudimos identificar un activo</div>
+                <div class="verification-card-body">${renderMarkdown(text)}</div>
+            </div>
+            <div class="verification-card-hint">Editá tu portafolio para corregir el nombre del activo y volvé a intentarlo</div>
+        `;
+        document.getElementById('quiz-verification-actions').style.display = 'block';
+    }
+}
+
+function showVerificationForm({ nombre, pct }) {
+    verifSelections = { type: null, sector: null };
+    document.getElementById('quiz-step-label').textContent = 'VERIFICACIÓN REQUERIDA';
+    document.getElementById('quiz-verification-actions').style.display = 'none';
+
+    const SECTORS = ['Energía', 'Tecnología', 'Salud', 'Finanzas', 'Consumo', 'Inmobiliario', 'Commodities', 'Cripto', 'Otro'];
+    const sectorChips = SECTORS.map(s =>
+        `<button class="verif-chip" data-value="${s}" onclick="selectVerifChip('sector', this)">${s}</button>`
+    ).join('');
+
+    document.getElementById('quiz-question-text').innerHTML = `
+        <div class="verification-card">
+            <div class="verification-card-title">⚠ Necesitamos aclarar un activo</div>
+            <div style="font-size:0.9rem;color:#c0c0d0;margin-bottom:18px;line-height:1.5">
+                <strong>"${nombre}"</strong>${pct ? ` representa aprox. el <strong>${pct}%</strong> de tu portafolio` : ''} y no pudimos identificarlo automáticamente.
+            </div>
+
+            <div class="verif-label">¿ES EMPRESA PÚBLICA O PRIVADA?</div>
+            <div class="verif-chips" id="verif-type-chips">
+                <button class="verif-chip" data-value="pública (cotiza en bolsa)" onclick="selectVerifChip('type', this)">Empresa pública</button>
+                <button class="verif-chip" data-value="privada (no cotiza en mercados públicos)" onclick="selectVerifChip('type', this)">Empresa privada</button>
+            </div>
+
+            <div class="verif-label">¿A QUÉ SECTOR PERTENECE?</div>
+            <div class="verif-chips" id="verif-sector-chips">${sectorChips}</div>
+
+            <button class="verif-submit" id="verif-submit-btn" onclick="submitVerification('${nombre.replace(/'/g, "\\'")}')" disabled>
+                Continuar con el diagnóstico →
+            </button>
+        </div>
+    `;
+}
+
+function selectVerifChip(group, btn) {
+    document.getElementById(`verif-${group}-chips`).querySelectorAll('.verif-chip')
+        .forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+    verifSelections[group] = btn.dataset.value;
+    const submitBtn = document.getElementById('verif-submit-btn');
+    if (submitBtn) submitBtn.disabled = !(verifSelections.type && verifSelections.sector);
+}
+
+function submitVerification(nombre) {
+    const { type, sector } = verifSelections;
+    if (!type || !sector) return;
+    portfolioMessage += `\n\n[Aclaración del usuario sobre "${nombre}": es una empresa ${type}, sector ${sector}.]`;
+    document.getElementById('quiz-question-text').innerHTML = '';
+    document.getElementById('quiz-step-label').textContent = '';
+    generateReport();
+}
+
+function goBackToPortfolio() {
+    document.getElementById('quiz-verification-actions').style.display = 'none';
+    document.getElementById('quiz-question-text').innerHTML = '';
+    document.getElementById('quiz-step-label').textContent = '';
+    reportGenerated  = false;
+    pendingReportText = '';
+    // Mostrar el portafolio sin resetear — los datos del usuario se preservan
+    document.getElementById('quiz-section').classList.remove('active');
+    const step = document.getElementById('portfolio-step');
+    step.classList.add('active');
+    step.scrollIntoView({ behavior: 'smooth' });
+}
+
 // ── GENERAR REPORTE (1 sola llamada a Claude) ──────
 async function generateReport() {
     document.getElementById('quiz-input-row').style.display = 'none';
@@ -2723,24 +3001,55 @@ async function generateReport() {
         userContent = msg;
     }
 
-    try {
-        const response = await callAPI([{ role: 'user', content: userContent }]);
-        hideLoading();
-        const { visible, interna } = splitNotaInterna(response);
-        if (!visible) throw new Error('Respuesta vacía del servidor');
-        if (interna) notaInterna = interna;
-        reportGenerated   = true;
-        pendingReportText = visible;
-        saveDiagnosis(visible);
-        sendWebhook({ notaInterna, diagnostico: visible });
-        document.getElementById('quiz-section').style.display = 'none';
-        const gate = document.getElementById('email-gate');
-        gate.style.display = 'flex';
-        gate.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => document.getElementById('diag-email').focus(), 300);
-    } catch(e) {
-        hideLoading();
-        showErrorState();
+    const RETRY_MSGS = [
+        'Generando tu diagnóstico...',
+        'Estamos procesando tu diagnóstico, un momento...',
+        'Casi listo, procesando tu información...'
+    ];
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        document.getElementById('quiz-step-label').textContent = RETRY_MSGS[attempt];
+        try {
+            const response = await callAPI([{ role: 'user', content: userContent }]);
+            const { visible, interna } = splitNotaInterna(response);
+            if (!visible) throw new Error('Respuesta vacía del servidor');
+            if (interna) notaInterna = interna;
+
+            if (!isRealDiagnostic(visible)) {
+                showVerification(visible);
+                return;
+            }
+
+            hideLoading();
+            reportGenerated   = true;
+            pendingReportText = visible;
+            saveDiagnosis(visible);
+            sendWebhook({ notaInterna, diagnostico: visible });
+            document.getElementById('quiz-section').style.display = 'none';
+            const gate = document.getElementById('email-gate');
+            gate.style.display = 'flex';
+            gate.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => document.getElementById('diag-email').focus(), 300);
+            return;
+        } catch(e) {
+            fetch(API_ENDPOINT + '/track-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'diag_error',
+                    error_message: e.message || String(e),
+                    status_code: e.status || null,
+                    attempt: attempt + 1
+                })
+            }).catch(() => {});
+            if (attempt < MAX_ATTEMPTS - 1) {
+                await new Promise(r => setTimeout(r, 4000));
+            } else {
+                hideLoading();
+                showErrorState();
+            }
+        }
     }
 }
 
@@ -2797,11 +3106,6 @@ function renderReport(text) {
     let html = '';
     if (titleM) html += `<h1 class="report-title">${titleM[1].trim()}</h1>`;
 
-    if (resumen) html += `
-        <div class="report-block">
-            <div class="report-block-label">Resumen ejecutivo</div>
-            <div class="report-summary">${resumen.replace(/\n+/g, ' ').trim()}</div>
-        </div>`;
 
     if (scoreRaw) html += `
         <div class="report-block">
@@ -2905,7 +3209,26 @@ function renderIncongruencias(raw) {
 }
 
 function showErrorState() {
-    document.getElementById('quiz-question-text').textContent = 'Hubo un error. Por favor intentá de nuevo.';
+    const label = document.getElementById('quiz-step-label');
+    const qText = document.getElementById('quiz-question-text');
+    label.textContent = '';
+    qText.innerHTML = `
+        <div style="text-align:center;padding:12px 0">
+            <div style="font-size:0.95rem;color:#A0A0B0;margin-bottom:16px;line-height:1.6">
+                La página está recibiendo mucho tráfico en este momento.<br>
+                Tus respuestas están guardadas — intentá de nuevo.
+            </div>
+            <button onclick="retryGenerateReport()" style="
+                background:#C9A96E;color:#0A0A0F;border:none;border-radius:10px;
+                padding:12px 28px;font-weight:700;font-size:0.95rem;cursor:pointer">
+                Reintentar →
+            </button>
+        </div>`;
+}
+
+function retryGenerateReport() {
+    document.getElementById('quiz-question-text').innerHTML = '';
+    generateReport();
 }
 
 // ── PROGRESS ────────────────────────────────────────
@@ -2972,13 +3295,21 @@ function showCTA(reportText) {
     else if (score >= 41) riesgo = 'medio-alto';
     else if (score >= 21) riesgo = 'moderado';
 
-    let waMsg = encodeURIComponent(`Hola, acabo de hacer el diagnóstico de mi portafolio y quisiera agendar una llamada con el equipo.`);
-    document.getElementById('wa-btn').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`;
+    const waBtn = document.getElementById('wa-btn');
+    waBtn.href = WHATSAPP_LINK;
+    waBtn.addEventListener('click', () => {
+        if (!savedDiagId) return;
+        fetch(API_ENDPOINT + '/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'wa_click', id: savedDiagId })
+        }).catch(() => {});
+    }, { once: true });
 
     const ctaEl = document.getElementById('report-cta');
     ctaEl.querySelector('p').textContent = riesgo === 'alto'
-        ? 'Tu portafolio tiene señales importantes que requieren atención. Agendá una sesión con el equipo para revisar tu caso en profundidad.'
-        : 'El diagnóstico detectó puntos que vale la pena revisar con mayor profundidad. Agendá una sesión con el equipo.';
+        ? 'Tu portafolio tiene señales importantes que requieren atención. Comunicate con Roberto Ruarte para solucionar este problema.'
+        : 'Tu portafolio tiene señales importantes que requieren atención. Comunicate con Roberto Ruarte para solucionar este problema.';
     ctaEl.style.display = 'block';
 }
 
@@ -2995,7 +3326,8 @@ async function saveDiagnosis(diagnostico) {
                 quizAnswers,
                 diagnostico,
                 notaInterna,
-                score
+                score,
+                canal: LEAD_CANAL
             })
         });
         const data = await res.json();
@@ -3006,31 +3338,66 @@ async function saveDiagnosis(diagnostico) {
 }
 
 async function submitEmail() {
-    const input = document.getElementById('diag-email');
-    const email = input.value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        input.focus();
-        input.style.borderColor = '#F44336';
-        setTimeout(() => input.style.borderColor = '', 1500);
+    const nombreInput = document.getElementById('diag-nombre');
+    const apellidoInput = document.getElementById('diag-apellido');
+    const emailInput = document.getElementById('diag-email');
+    const celularInput = document.getElementById('diag-celular');
+
+    const nombre = nombreInput.value.trim();
+    const apellido = apellidoInput.value.trim();
+    const email = emailInput.value.trim();
+    const celular = celularInput.value.trim();
+
+    const fields = [
+        [nombreInput, nombre.length >= 2],
+        [apellidoInput, apellido.length >= 2],
+        [emailInput, /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)],
+        [celularInput, celular.replace(/[^0-9]/g, '').length >= 8]
+    ];
+    let firstInvalid = null;
+    fields.forEach(([el, valid]) => {
+        el.style.borderColor = valid ? '' : '#F44336';
+        if (!valid && !firstInvalid) firstInvalid = el;
+    });
+    if (firstInvalid) {
+        firstInvalid.focus();
+        setTimeout(() => fields.forEach(([el]) => el.style.borderColor = ''), 1500);
         return;
+    }
+
+    if (window.location.hostname !== 'localhost') {
+        fetch(API_ENDPOINT + '/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'email_submitted' })
+        }).catch(() => {});
     }
     const btn = document.getElementById('email-submit-btn');
     btn.disabled = true;
     btn.textContent = 'Un momento...';
-    // guardar email (fire & forget — no bloqueamos el flujo)
+    // guardar datos (fire & forget — no bloqueamos el flujo)
     fetch(API_ENDPOINT + '/save-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: savedDiagId, email })
+        body: JSON.stringify({ id: savedDiagId, email, nombre, apellido, celular, canal: LEAD_CANAL })
     }).catch(() => {});
-    // mostrar reporte
+
     document.getElementById('email-gate').style.display = 'none';
+
+    if (LEAD_CANAL === 'outbound') {
+        document.getElementById('outbound-thanks').style.display = 'flex';
+        if (!isLocalhost) fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
+        return;
+    }
+
+    // mostrar reporte (solo canal inbound)
     if (!pendingReportText) {
         showErrorState();
         return;
     }
     showReport(pendingReportText);
     showCTA(pendingReportText);
+    if (!isLocalhost) fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
 }
 
 // ── WEBHOOK ───────────────────────────────────────────

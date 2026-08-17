@@ -13,16 +13,17 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
     try {
-        const { portfolio, quizAnswers, diagnostico, notaInterna, score } = req.body;
+        const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal } = req.body;
         const { rows } = await pool.query(
-            `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score)
-             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
             [
                 typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
                 typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
                 diagnostico || '',
                 notaInterna || '',
-                score ?? null
+                score ?? null,
+                canal === 'outbound' ? 'outbound' : 'inbound'
             ]
         );
         res.status(200).json({ ok: true, id: rows[0].id });

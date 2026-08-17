@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Diagnósticos</title>
+<style>
+    :root {
+        --bg: #0e0e11;
+        --bg2: #16161a;
+        --bg3: #1e1e24;
+        --border: #2a2a35;
+        --text: #f0f0f5;
+        --text2: #a0a0b0;
+        --text3: #606070;
+        --gold: #c9a84c;
+        --red: #e05252;
+        --green: #52c97a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+        display: flex; align-items: center; justify-content: center;
+        min-height: 100vh;
+    }
+    .login-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 360px;
+        display: flex; flex-direction: column; gap: 20px;
+    }
+    .login-card h1 { font-size: 1.1rem; font-weight: 600; color: var(--gold); }
+    .login-card p  { font-size: 0.82rem; color: var(--text3); }
+    .login-card input {
+        width: 100%; padding: 12px 14px;
+        background: var(--bg3); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); font-size: 0.9rem;
+        outline: none;
+    }
+    .login-card input:focus { border-color: var(--gold); }
+    .login-card button {
+        width: 100%; padding: 13px;
+        background: var(--gold); border: none; border-radius: 8px;
+        color: #0e0e11; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+    }
+    .login-card button:hover { opacity: 0.9; }
+    #login-error { color: var(--red); font-size: 0.8rem; display: none; }
+
+    /* ── PANEL ── */
+    #panel-screen { display: none; padding: 28px 24px; }
+    .panel-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+    }
+    .panel-header h1 { font-size: 1rem; font-weight: 600; color: var(--gold); }
+    .panel-meta { font-size: 0.78rem; color: var(--text3); }
+    #search-input {
+        padding: 9px 14px; background: var(--bg2); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); font-size: 0.82rem; outline: none;
+        width: 220px;
+    }
+    #search-input:focus { border-color: var(--gold); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+        background: var(--bg3); color: var(--text3); font-size: 0.72rem;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 11px 14px; text-align: left; white-space: nowrap;
+        border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg2); }
+    tbody td { padding: 12px 14px; color: var(--text2); vertical-align: top; }
+    td.id-col    { color: var(--text3); font-size: 0.78rem; width: 40px; }
+    td.date-col  { white-space: nowrap; font-size: 0.8rem; color: var(--text3); }
+    td.email-col { font-size: 0.82rem; }
+    td.score-col { text-align: center; }
+    .score-badge {
+        display: inline-block; padding: 3px 10px; border-radius: 20px;
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .score-low  { background: rgba(82,201,122,0.15); color: var(--green); }
+    .score-mid  { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .score-high { background: rgba(224,82,82,0.15);  color: var(--red);  }
+    td.nota-col { font-size: 0.8rem; max-width: 260px; line-height: 1.5; }
+    .ver-btn {
+        background: none; border: 1px solid var(--border); border-radius: 6px;
+        color: var(--text3); font-size: 0.75rem; padding: 4px 10px; cursor: pointer;
+        white-space: nowrap;
+    }
+    .ver-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── MODAL ── */
+    #modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.75); z-index: 100;
+        align-items: center; justify-content: center; padding: 24px;
+    }
+    #modal-overlay.open { display: flex; }
+    .modal-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: 16px; width: 100%; max-width: 680px;
+        max-height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-size: 0.9rem; font-weight: 600; }
+    .modal-close {
+        background: none; border: none; color: var(--text3); font-size: 1.2rem;
+        cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 22px; overflow-y: auto; }
+    .modal-section { margin-bottom: 20px; }
+    .modal-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .modal-text { font-size: 0.85rem; line-height: 1.65; color: var(--text2); white-space: pre-wrap; }
+    .modal-text.nota { color: var(--gold); opacity: 0.9; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+    <div class="login-card">
+        <h1>Panel de Administración</h1>
+        <p>Ingresá la contraseña para ver los diagnósticos.</p>
+        <input type="password" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter') doLogin()">
+        <div id="login-error">Contraseña incorrecta. Intentá de nuevo.</div>
+        <button onclick="doLogin()">Ingresar</button>
+    </div>
+</div>
+
+<!-- ── PANEL ── -->
+<div id="panel-screen">
+    <div class="panel-header">
+        <div>
+            <h1>Diagnósticos recibidos</h1>
+            <div class="panel-meta" id="total-meta"></div>
+        </div>
+        <input type="text" id="search-input" placeholder="Buscar por email…" oninput="filterTable()">
+    </div>
+    <div class="table-wrap">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Email</th>
+                    <th>Score</th>
+                    <th>Nota interna</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── MODAL ── -->
+<div id="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="modal-title">Diagnóstico completo</h2>
+            <button class="modal-close" onclick="closeModalDirect()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-section">
+                <div class="modal-label">Portafolio</div>
+                <div class="modal-text" id="modal-portfolio"></div>
+            </div>
+            <div class="modal-section">
+                <div class="modal-label">Nota interna</div>
+                <div class="modal-text nota" id="modal-nota"></div>
+            </div>
+            <div class="modal-section">
+                <div class="modal-label">Diagnóstico completo</div>
+                <div class="modal-text" id="modal-diagnostico"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'https://diagnostico-portafolio-ia.vercel.app/api';
+let allRows = [];
+let savedPwd = '';
+
+async function doLogin() {
+    const pwd = document.getElementById('pwd-input').value;
+    if (!pwd) return;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    try {
+        const res = await fetch(API + '/admin-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            errEl.style.display = 'block';
+            return;
+        }
+        savedPwd = pwd;
+        allRows = data.rows;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('panel-screen').style.display = 'block';
+        renderTable(allRows);
+    } catch (e) {
+        errEl.textContent = 'Error de conexión. Intentá de nuevo.';
+        errEl.style.display = 'block';
+    }
+}
+
+function renderTable(rows) {
+    const tbody = document.getElementById('table-body');
+    document.getElementById('total-meta').textContent = rows.length + ' registro' + (rows.length !== 1 ? 's' : '');
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No hay registros que coincidan.</div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => {
+        const fecha = new Date(r.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const scoreClass = r.score <= 3 ? 'score-low' : r.score <= 6 ? 'score-mid' : 'score-high';
+        const nota = r.nota_interna ? r.nota_interna.slice(0, 120) + (r.nota_interna.length > 120 ? '…' : '') : '—';
+        return `<tr>
+            <td class="id-col">${r.id}</td>
+            <td class="date-col">${fecha}</td>
+            <td class="email-col">${r.email || '<span style="color:var(--text3)">—</span>'}</td>
+            <td class="score-col"><span class="score-badge ${scoreClass}">${r.score ?? '—'}</span></td>
+            <td class="nota-col">${nota}</td>
+            <td><button class="ver-btn" onclick="openModal(${i})">Ver →</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function filterTable() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = allRows.filter(r => (r.email || '').toLowerCase().includes(q));
+    renderTable(filtered);
+}
+
+function openModal(i) {
+    const r = allRows[i];
+    document.getElementById('modal-title').textContent = 'Diagnóstico #' + r.id + (r.email ? ' — ' + r.email : '');
+    document.getElementById('modal-portfolio').textContent = r.portfolio || '—';
+    document.getElementById('modal-nota').textContent = r.nota_interna || '—';
+    document.getElementById('modal-diagnostico').textContent = r.diagnostico || '—';
+    document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+function closeModalDirect() {
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+</script>
+</body>
+</html>
