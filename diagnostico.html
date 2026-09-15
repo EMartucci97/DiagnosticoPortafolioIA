@@ -587,13 +587,23 @@
         #report-cta a:hover { opacity: 0.88; }
 
         /* ── EMAIL GATE ─────────────────────────── */
-        #email-gate, #outbound-thanks {
+        #email-gate, #thanks-section {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 40px 20px;
         }
+        .thanks-wa-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            background: #25D366; color: #fff; font-weight: 700; font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            padding: 18px 40px; border-radius: 14px; text-decoration: none;
+            width: 100%; max-width: 420px; transition: opacity 0.2s;
+            box-shadow: 0 4px 24px rgba(37,211,102,0.25);
+            margin-top: 8px;
+        }
+        .thanks-wa-btn:hover { opacity: 0.88; }
         .email-gate-inner {
             max-width: 480px;
             width: 100%;
@@ -1234,7 +1244,7 @@
     <div class="email-gate-inner">
         <div class="email-gate-check">✓</div>
         <h2 class="email-gate-title">Tu diagnóstico está listo</h2>
-        <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y te lo enviamos ahora.</p>
+        <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y coordinamos la entrega con uno de nuestros consultores.</p>
         <div class="email-gate-row">
             <input type="text" id="diag-nombre" placeholder="Nombre" autocomplete="given-name"
                 onkeydown="if(event.key==='Enter') document.getElementById('diag-apellido').focus()">
@@ -1244,18 +1254,19 @@
                 onkeydown="if(event.key==='Enter') document.getElementById('diag-celular').focus()">
             <input type="tel" id="diag-celular" placeholder="Celular (+cód. país)" autocomplete="tel"
                 onkeydown="if(event.key==='Enter') submitEmail()">
-            <button class="email-gate-btn" onclick="submitEmail()" id="email-submit-btn">Ver diagnóstico →</button>
+            <button class="email-gate-btn" onclick="submitEmail()" id="email-submit-btn">Solicitar diagnóstico →</button>
         </div>
         <p class="email-gate-note">Sin spam. Solo tu diagnóstico.</p>
     </div>
 </section>
 
-<section id="outbound-thanks" style="display:none">
+<section id="thanks-section" style="display:none">
     <div class="email-gate-inner">
         <div class="email-gate-check">✓</div>
         <h2 class="email-gate-title">¡Listo, ya tenemos tus datos!</h2>
-        <p class="email-gate-sub">Tu diagnóstico fue generado y uno de nuestros consultores te va a llamar para repasarlo con vos en tu sesión.</p>
-        <p class="email-gate-note">Guardá tu teléfono a mano — te contactamos a la brevedad.</p>
+        <p class="email-gate-sub">Tu diagnóstico ya está generado. Escribinos por WhatsApp y uno de nuestros consultores te lo comparte y lo repasa con vos.</p>
+        <a id="thanks-wa-btn" class="thanks-wa-btn" href="#" target="_blank">Pedir mi diagnóstico por WhatsApp</a>
+        <p class="email-gate-note" style="margin-top:20px;">Guardá tu teléfono a mano — te contactamos a la brevedad.</p>
     </div>
 </section>
 
@@ -2690,6 +2701,7 @@ function syncSectorHeaderFromAssets(sectorRow) {
     let sumPct = 0, sumUsd = 0;
     assetPctInputs.forEach(i => sumPct += parseFloat(i.value) || 0);
     sectorRow.querySelectorAll('.asset-row .usd-input').forEach(i => sumUsd += parseNum(i.value));
+    if (sumPct === 0 && sumUsd === 0) return; // sin detalle por activo: no pisar lo que el usuario cargó en el sector
     const pctInput = header.querySelector('.pct-input');
     const usdInput = header.querySelector('.usd-input');
     pctInput.value = sumPct > 0 ? fmtPct(sumPct) : '';
@@ -3383,20 +3395,19 @@ async function submitEmail() {
     }).catch(() => {});
 
     document.getElementById('email-gate').style.display = 'none';
+    document.getElementById('thanks-section').style.display = 'flex';
 
-    if (LEAD_CANAL === 'outbound') {
-        document.getElementById('outbound-thanks').style.display = 'flex';
-        if (!isLocalhost) fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
-        return;
-    }
+    const waBtn = document.getElementById('thanks-wa-btn');
+    waBtn.href = WHATSAPP_LINK;
+    waBtn.addEventListener('click', () => {
+        if (!savedDiagId) return;
+        fetch(API_ENDPOINT + '/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'wa_click', id: savedDiagId })
+        }).catch(() => {});
+    }, { once: true });
 
-    // mostrar reporte (solo canal inbound)
-    if (!pendingReportText) {
-        showErrorState();
-        return;
-    }
-    showReport(pendingReportText);
-    showCTA(pendingReportText);
     if (!isLocalhost) fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
 }
 
@@ -3565,25 +3576,5 @@ document.getElementById('send-btn').onclick = function() {
 };
 </script>
 
-<script src="editor-panel.js"></script>
-<script>
-initEditorPanel({
-    header: { label: 'Header', hasBg: true, hasPad: false, fields: [
-        { label: 'Marca', sel: '#header-brand' }
-    ]},
-    hero: { label: 'Hero', hasBg: true, hasPad: true, fields: [
-        { label: 'Badge',      sel: '#hero-badge' },
-        { label: 'Título',     sel: '#hero-h1' },
-        { label: 'Subtítulo',  sel: '#hero-p' },
-        { label: 'Botón CTA',  sel: '#hero-cta-text' },
-        { label: 'Trust line', sel: '#hero-trust' }
-    ]},
-    chat: { label: 'Chat', hasBg: true, hasPad: true, fields: [] },
-    cta:  { label: 'CTA Bar', hasBg: true, hasPad: false, fields: [
-        { label: 'Texto CTA', sel: '#cta-text' },
-        { label: 'Botón WA',  sel: '#cta-btn-text' }
-    ]}
-}, { downloadName: 'ep-changes-diagnostico.json' });
-</script>
 </body>
 </html>
