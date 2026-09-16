@@ -127,7 +127,7 @@ http.createServer(async (req, res) => {
                     diagnostico || '',
                     notaInterna || '',
                     score ?? null,
-                    canal === 'outbound' ? 'outbound' : 'inbound'
+                    (canal === 'outbound' || canal === 'agendado') ? canal : 'inbound'
                 ]
             );
             const id = rows[0].id;
@@ -141,7 +141,7 @@ http.createServer(async (req, res) => {
             if (!id || !email) return jsonRes(res, 400, { error: 'id y email requeridos' });
             await pool.query(
                 `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
-                [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), canal === 'outbound' ? 'outbound' : (canal === 'inbound' ? 'inbound' : null), id]
+                [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), ['outbound', 'inbound', 'agendado'].includes(canal) ? canal : null, id]
             );
             console.log(`[DB] Datos id=${id} → ${email}`);
             return jsonRes(res, 200, { ok: true });

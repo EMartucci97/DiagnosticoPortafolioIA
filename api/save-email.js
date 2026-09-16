@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
         if (!id || !email) { res.status(400).json({ error: 'id y email requeridos' }); return; }
         await pool.query(
             `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
-            [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), canal === 'outbound' ? 'outbound' : (canal === 'inbound' ? 'inbound' : null), id]
+            [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), ['outbound', 'inbound', 'agendado'].includes(canal) ? canal : null, id]
         );
         res.status(200).json({ ok: true });
     } catch(e) {

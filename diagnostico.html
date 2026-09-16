@@ -587,7 +587,7 @@
         #report-cta a:hover { opacity: 0.88; }
 
         /* ── EMAIL GATE ─────────────────────────── */
-        #email-gate, #thanks-section {
+        #email-gate, #thanks-section, #agendado-thanks {
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -655,6 +655,23 @@
         }
         .email-gate-row input:focus { border-color: var(--gold); }
         .email-gate-row input::placeholder { color: var(--text3); }
+        .phone-row { display: flex; gap: 10px; }
+        .phone-country {
+            flex: 0 0 100px;
+            padding: 15px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .phone-country:focus { border-color: var(--gold); }
+        .phone-row input { flex: 1; min-width: 0; }
         .email-gate-btn {
             width: 100%;
             padding: 16px;
@@ -1252,8 +1269,33 @@
                 onkeydown="if(event.key==='Enter') document.getElementById('diag-email').focus()">
             <input type="email" id="diag-email" placeholder="tu@email.com" autocomplete="email"
                 onkeydown="if(event.key==='Enter') document.getElementById('diag-celular').focus()">
-            <input type="tel" id="diag-celular" placeholder="Celular (+cód. país)" autocomplete="tel"
-                onkeydown="if(event.key==='Enter') submitEmail()">
+            <div class="phone-row">
+                <select id="diag-pais" class="phone-country">
+                    <option value="+54" selected>🇦🇷 +54</option>
+                    <option value="+598">🇺🇾 +598</option>
+                    <option value="+56">🇨🇱 +56</option>
+                    <option value="+595">🇵🇾 +595</option>
+                    <option value="+591">🇧🇴 +591</option>
+                    <option value="+55">🇧🇷 +55</option>
+                    <option value="+52">🇲🇽 +52</option>
+                    <option value="+57">🇨🇴 +57</option>
+                    <option value="+51">🇵🇪 +51</option>
+                    <option value="+593">🇪🇨 +593</option>
+                    <option value="+58">🇻🇪 +58</option>
+                    <option value="+507">🇵🇦 +507</option>
+                    <option value="+506">🇨🇷 +506</option>
+                    <option value="+502">🇬🇹 +502</option>
+                    <option value="+503">🇸🇻 +503</option>
+                    <option value="+504">🇭🇳 +504</option>
+                    <option value="+505">🇳🇮 +505</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+1">🇩🇴 +1</option>
+                    <option value="+1">🇵🇷 +1</option>
+                    <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input type="tel" id="diag-celular" placeholder="Celular" autocomplete="tel" inputmode="numeric"
+                    onkeydown="if(event.key==='Enter') submitEmail()">
+            </div>
             <button class="email-gate-btn" onclick="submitEmail()" id="email-submit-btn">Solicitar diagnóstico →</button>
         </div>
         <p class="email-gate-note">Sin spam. Solo tu diagnóstico.</p>
@@ -1270,11 +1312,22 @@
     </div>
 </section>
 
+<section id="agendado-thanks" style="display:none">
+    <div class="email-gate-inner">
+        <div class="email-gate-check">✓</div>
+        <h2 class="email-gate-title">¡Listo, ya tenemos tus datos!</h2>
+        <p class="email-gate-sub">Tu diagnóstico va a estar preparado para tu sesión de consultoría. Nos vemos ahí.</p>
+    </div>
+</section>
+
 <script>
 // ── CONFIG ─────────────────────────────────────────
 const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
 const WHATSAPP_LINK     = 'https://wa.link/amvekl';
-const LEAD_CANAL        = new URLSearchParams(window.location.search).get('canal') === 'outbound' ? 'outbound' : 'inbound';
+const LEAD_CANAL        = (() => {
+    const c = new URLSearchParams(window.location.search).get('canal');
+    return (c === 'outbound' || c === 'agendado') ? c : 'inbound';
+})();
 
 // Trackear visita única al cargar (solo en producción)
 if (window.location.hostname !== 'localhost') {
@@ -1999,6 +2052,7 @@ let notaInterna      = '';
 let reportGenerated  = false;
 let savedDiagId      = null;
 let pendingReportText = '';
+let diagnosisPromise = null;
 let chatStarted    = false;
 let questionCount  = 0;
 let maxQuestions   = 12;
@@ -2865,7 +2919,7 @@ function confirmStaticAnswer() {
         const text = document.getElementById('user-input').value.trim();
         if (!text) return;
         quizAnswers[currentQuizIndex] = { question: q.q, letter: '', answer: text };
-        generateReport();
+        finishQuiz();
         return;
     }
 
@@ -2877,10 +2931,20 @@ function confirmStaticAnswer() {
 
     const next = currentQuizIndex + 1;
     if (next >= QUIZ_QUESTIONS.length) {
-        generateReport();
+        finishQuiz();
     } else {
         showStaticQuestion(next);
     }
+}
+
+// ── FIN DEL QUIZ: mostrar el gate de datos ya mismo, el diagnóstico se genera en segundo plano ──
+function finishQuiz() {
+    document.getElementById('quiz-section').style.display = 'none';
+    const gate = document.getElementById('email-gate');
+    gate.style.display = 'flex';
+    gate.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => document.getElementById('diag-email').focus(), 300);
+    diagnosisPromise = generateReport();
 }
 
 // ── VERIFICACIÓN: detecta si Claude devolvió un diagnóstico real o un marcador de verificación ──
@@ -2983,15 +3047,8 @@ function goBackToPortfolio() {
     step.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ── GENERAR REPORTE (1 sola llamada a Claude) ──────
+// ── GENERAR REPORTE (1 sola llamada a Claude, en segundo plano — el lead ya está en el email-gate) ──
 async function generateReport() {
-    document.getElementById('quiz-input-row').style.display = 'none';
-    document.getElementById('quiz-options').innerHTML = '';
-    document.getElementById('quiz-continue-btn').classList.remove('visible');
-    document.getElementById('quiz-step-label').textContent = 'Generando tu diagnóstico...';
-    document.getElementById('quiz-question-text').textContent = '';
-    showLoading();
-
     let msg = 'Generá el diagnóstico completo basándote en el portafolio y las respuestas del cuestionario.\n\n';
     if (portfolioMessage) msg += portfolioMessage + '\n\n';
     msg += 'Respuestas al cuestionario de perfil:\n';
@@ -3013,36 +3070,28 @@ async function generateReport() {
         userContent = msg;
     }
 
-    const RETRY_MSGS = [
-        'Generando tu diagnóstico...',
-        'Estamos procesando tu diagnóstico, un momento...',
-        'Casi listo, procesando tu información...'
-    ];
     const MAX_ATTEMPTS = 3;
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        document.getElementById('quiz-step-label').textContent = RETRY_MSGS[attempt];
         try {
             const response = await callAPI([{ role: 'user', content: userContent }]);
             const { visible, interna } = splitNotaInterna(response);
             if (!visible) throw new Error('Respuesta vacía del servidor');
-            if (interna) notaInterna = interna;
 
+            let notaFinal = interna || '';
             if (!isRealDiagnostic(visible)) {
-                showVerification(visible);
-                return;
+                // No se pudo generar un diagnóstico real (activo ambiguo, etc.) — el lead ya está
+                // camino a WhatsApp igual, así que dejamos la aclaración para que el consultor
+                // se la pida directamente en la charla.
+                notaFinal = (notaFinal ? notaFinal + '\n\n' : '') +
+                    '[VERIFICACIÓN REQUERIDA — el consultor debe confirmar el activo con el cliente antes de armar el diagnóstico final]\n' + visible;
             }
+            if (notaFinal) notaInterna = notaFinal;
 
-            hideLoading();
             reportGenerated   = true;
             pendingReportText = visible;
-            saveDiagnosis(visible);
+            await saveDiagnosis(visible);
             sendWebhook({ notaInterna, diagnostico: visible });
-            document.getElementById('quiz-section').style.display = 'none';
-            const gate = document.getElementById('email-gate');
-            gate.style.display = 'flex';
-            gate.scrollIntoView({ behavior: 'smooth' });
-            setTimeout(() => document.getElementById('diag-email').focus(), 300);
             return;
         } catch(e) {
             fetch(API_ENDPOINT + '/track-event', {
@@ -3057,9 +3106,6 @@ async function generateReport() {
             }).catch(() => {});
             if (attempt < MAX_ATTEMPTS - 1) {
                 await new Promise(r => setTimeout(r, 4000));
-            } else {
-                hideLoading();
-                showErrorState();
             }
         }
     }
@@ -3354,17 +3400,19 @@ async function submitEmail() {
     const apellidoInput = document.getElementById('diag-apellido');
     const emailInput = document.getElementById('diag-email');
     const celularInput = document.getElementById('diag-celular');
+    const paisInput = document.getElementById('diag-pais');
 
     const nombre = nombreInput.value.trim();
     const apellido = apellidoInput.value.trim();
     const email = emailInput.value.trim();
-    const celular = celularInput.value.trim();
+    const celularNum = celularInput.value.replace(/[^0-9]/g, '');
+    const celular = celularNum ? paisInput.value + celularNum : '';
 
     const fields = [
         [nombreInput, nombre.length >= 2],
         [apellidoInput, apellido.length >= 2],
         [emailInput, /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)],
-        [celularInput, celular.replace(/[^0-9]/g, '').length >= 8]
+        [celularInput, celularNum.length >= 6]
     ];
     let firstInvalid = null;
     fields.forEach(([el, valid]) => {
@@ -3387,28 +3435,55 @@ async function submitEmail() {
     const btn = document.getElementById('email-submit-btn');
     btn.disabled = true;
     btn.textContent = 'Un momento...';
-    // guardar datos (fire & forget — no bloqueamos el flujo)
-    fetch(API_ENDPOINT + '/save-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: savedDiagId, email, nombre, apellido, celular, canal: LEAD_CANAL })
-    }).catch(() => {});
-
-    document.getElementById('email-gate').style.display = 'none';
-    document.getElementById('thanks-section').style.display = 'flex';
-
-    const waBtn = document.getElementById('thanks-wa-btn');
-    waBtn.href = WHATSAPP_LINK;
-    waBtn.addEventListener('click', () => {
+    // guardar datos (fire & forget — no bloqueamos el flujo).
+    // El diagnóstico puede seguir generándose en segundo plano: esperamos a que
+    // termine (o creamos una fila vacía si falló) para no perder el contacto del lead.
+    (async () => {
+        if (diagnosisPromise) { try { await diagnosisPromise; } catch (e) {} }
+        if (!savedDiagId) {
+            try {
+                const res = await fetch(API_ENDPOINT + '/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        portfolio: portfolioMessage,
+                        quizAnswers,
+                        diagnostico: '',
+                        notaInterna: '[Diagnóstico no generado — falló la llamada a la IA. Armar manualmente con el portafolio/respuestas guardados.]',
+                        canal: LEAD_CANAL
+                    })
+                });
+                const data = await res.json();
+                if (data.id) savedDiagId = data.id;
+            } catch (e) {}
+        }
         if (!savedDiagId) return;
-        fetch(API_ENDPOINT + '/track-event', {
+        fetch(API_ENDPOINT + '/save-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'wa_click', id: savedDiagId })
+            body: JSON.stringify({ id: savedDiagId, email, nombre, apellido, celular, canal: LEAD_CANAL })
         }).catch(() => {});
-    }, { once: true });
+    })();
 
-    if (!isLocalhost) fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
+    document.getElementById('email-gate').style.display = 'none';
+
+    if (LEAD_CANAL === 'agendado') {
+        document.getElementById('agendado-thanks').style.display = 'flex';
+    } else {
+        document.getElementById('thanks-section').style.display = 'flex';
+        const waBtn = document.getElementById('thanks-wa-btn');
+        waBtn.href = WHATSAPP_LINK;
+        waBtn.addEventListener('click', () => {
+            if (!savedDiagId) return;
+            fetch(API_ENDPOINT + '/track-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event: 'wa_click', id: savedDiagId })
+            }).catch(() => {});
+        }, { once: true });
+    }
+
+    if (window.location.hostname !== 'localhost') fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
 }
 
 // ── WEBHOOK ───────────────────────────────────────────
@@ -3574,6 +3649,88 @@ document.getElementById('send-btn').onclick = function() {
         confirmStaticAnswer();
     }
 };
+
+// ── DEV: menú de navegación rápida (solo con ?dev=1) ──
+if (new URLSearchParams(window.location.search).get('dev') === '1') {
+    const DEV_SECTIONS = ['hero', 'quiz-section', 'portfolio-step', 'report-section', 'email-gate', 'thanks-section', 'agendado-thanks'];
+
+    const DEV_REPORT_MD = '# Diagnóstico de ejemplo\n' +
+        '## Resumen ejecutivo\nTexto de ejemplo para preview del reporte.\n' +
+        '## Score de riesgo y estructura\nScore: 65/100. Estructura balanceada.\n' +
+        '## Puntos débiles detectados\n- Punto débil 1\n- Punto débil 2\n' +
+        '## Incongruencias detectadas\n- Ninguna detectada en este ejemplo.';
+
+    function devHideAll() {
+        DEV_SECTIONS.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (id === 'quiz-section' || id === 'portfolio-step') el.classList.remove('active');
+            else el.style.display = 'none';
+        });
+    }
+
+    const devTargets = {
+        'Hero': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = '';
+        },
+        'Portafolio': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            showPortfolioStep();
+        },
+        'Quiz': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            chatStarted = true;
+            initStep = 2;
+            maxQuestions = 12;
+            document.getElementById('quiz-section').classList.add('active');
+            startStaticQuiz();
+        },
+        'Reporte (legacy)': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            showReport(DEV_REPORT_MD);
+        },
+        'Datos (email-gate)': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            document.getElementById('email-gate').style.display = 'flex';
+            document.getElementById('diag-nombre').value = 'Juan';
+            document.getElementById('diag-apellido').value = 'Pérez';
+            document.getElementById('diag-email').value = 'juan@example.com';
+            document.getElementById('diag-celular').value = '98967051';
+        },
+        'Gracias (WhatsApp)': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            document.getElementById('thanks-section').style.display = 'flex';
+            document.getElementById('thanks-wa-btn').href = WHATSAPP_LINK;
+        },
+        'Gracias (Agendado)': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            document.getElementById('agendado-thanks').style.display = 'flex';
+        }
+    };
+
+    const devMenu = document.createElement('div');
+    devMenu.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:99999;background:#111;border:1px solid #444;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;font-family:sans-serif;max-width:190px;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+    devMenu.innerHTML = '<div style="color:#fff;font-weight:bold;font-size:12px;margin-bottom:2px;">🔧 Dev: ir a...</div>';
+
+    Object.keys(devTargets).forEach(label => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.style.cssText = 'background:#222;color:#fff;border:1px solid #555;border-radius:6px;padding:6px 8px;cursor:pointer;text-align:left;font-size:12px;';
+        btn.onmouseenter = () => btn.style.background = '#333';
+        btn.onmouseleave = () => btn.style.background = '#222';
+        btn.onclick = devTargets[label];
+        devMenu.appendChild(btn);
+    });
+
+    document.body.appendChild(devMenu);
+}
 </script>
 
 </body>

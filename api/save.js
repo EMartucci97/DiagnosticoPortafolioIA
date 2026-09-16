@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
                 diagnostico || '',
                 notaInterna || '',
                 score ?? null,
-                canal === 'outbound' ? 'outbound' : 'inbound'
+                (canal === 'outbound' || canal === 'agendado') ? canal : 'inbound'
             ]
         );
         res.status(200).json({ ok: true, id: rows[0].id });
