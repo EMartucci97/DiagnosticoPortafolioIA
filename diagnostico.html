@@ -1260,7 +1260,7 @@
 <section id="email-gate" style="display:none">
     <div class="email-gate-inner">
         <div class="email-gate-check">✓</div>
-        <h2 class="email-gate-title">Tu diagnóstico está listo</h2>
+        <h2 class="email-gate-title" id="email-gate-title">Tu diagnóstico está listo</h2>
         <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y coordinamos la entrega con uno de nuestros consultores.</p>
         <div class="email-gate-row">
             <input type="text" id="diag-nombre" placeholder="Nombre" autocomplete="given-name"
@@ -1317,6 +1317,7 @@
         <div class="email-gate-check">✓</div>
         <h2 class="email-gate-title">¡Listo, ya tenemos tus datos!</h2>
         <p class="email-gate-sub">Tu diagnóstico va a estar preparado para tu sesión de consultoría. Nos vemos ahí.</p>
+        <p class="email-gate-note" style="margin-top:20px;">Nuestro equipo ya está enterado, pero si querés podés confirmarle a tu consultor asignado que ya rellenaste tu diagnóstico para recibirlo en la llamada.</p>
     </div>
 </section>
 
@@ -1325,9 +1326,15 @@
 const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
 const WHATSAPP_LINK     = 'https://wa.link/amvekl';
 const LEAD_CANAL        = (() => {
+    if (window.location.hostname === 'app.ruartereports.org') return 'agendado';
     const c = new URLSearchParams(window.location.search).get('canal');
     return (c === 'outbound' || c === 'agendado') ? c : 'inbound';
 })();
+
+if (LEAD_CANAL === 'agendado') {
+    document.getElementById('email-gate-title').textContent = 'Diagnóstico Rellenado';
+    document.getElementById('email-gate-sub').textContent = 'Dejanos tus datos mientras nuestro consultor prepara tu diagnóstico para la llamada 1:1.';
+}
 
 // Trackear visita única al cargar (solo en producción)
 if (window.location.hostname !== 'localhost') {
