@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico + Plan de Acción — Ruarte Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --gold:        #C9A96E;
+        --gold-light:  #D4BC8A;
+        --gold-dark:   #A07840;
+        --bg:          #0A0A0F;
+        --bg2:         #111118;
+        --bg3:         #16161F;
+        --bg4:         #1C1C28;
+        --border:      #2A2A3A;
+        --text:        #F2F2F5;
+        --text2:       #A0A0B0;
+        --text3:       #6B6B7B;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    .header {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(10,10,15,0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 20px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .header img { height: 32px; }
+    .header-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--gold); }
+
+    #pdf-btn {
+        margin-left: auto;
+        background: var(--gold); color: #0A0A0F; border: none;
+        font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.8rem;
+        padding: 10px 18px; border-radius: 10px; cursor: pointer;
+    }
+    #pdf-btn:hover { background: var(--gold-light); }
+
+    #report-section { max-width: 700px; margin: 0 auto; padding: 40px 20px 70px; }
+
+    .report-eyebrow {
+        font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em;
+        color: var(--gold); font-weight: 700; margin-bottom: 10px;
+    }
+    .report-lead-meta {
+        font-size: 0.85rem; color: var(--text3); margin-bottom: 6px;
+    }
+    .report-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(1.3rem, 4vw, 1.65rem);
+        font-weight: 700; color: var(--text);
+        margin: 6px 0 32px; line-height: 1.3;
+    }
+    .report-block { margin-bottom: 32px; }
+    .report-block-label {
+        font-size: 0.68rem; text-transform: uppercase;
+        letter-spacing: 0.12em; color: var(--text3);
+        font-weight: 600; margin-bottom: 10px;
+    }
+    .report-summary {
+        font-size: 1.05rem; line-height: 1.85; color: var(--text2);
+        border-left: 3px solid var(--gold);
+        padding: 18px 22px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 0 12px 12px 0;
+    }
+    /* Score widget */
+    .score-widget { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px 24px 20px; }
+    .score-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+    .score-big-num { font-family: 'Poppins', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; min-width: 88px; text-align: center; color: #F44336; }
+    .score-big-num.risk-alto { color: #FF9800; }
+    .score-big-num.risk-critico { color: #F44336; }
+    .score-big-num.risk-medio-alto { color: #FFC107; }
+    .score-big-num.risk-moderado { color: #8BC34A; }
+    .score-big-num.risk-bajo { color: #4CAF50; }
+    .score-right { flex: 1; min-width: 0; }
+    .score-risk-tag { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #F44336; }
+    .score-risk-tag.risk-alto { color: #FF9800; }
+    .score-risk-tag.risk-critico { color: #F44336; }
+    .score-risk-tag.risk-medio-alto { color: #FFC107; }
+    .score-risk-tag.risk-moderado { color: #8BC34A; }
+    .score-risk-tag.risk-bajo { color: #4CAF50; }
+    .score-sublabel { font-size: 0.73rem; color: var(--text3); margin-bottom: 10px; }
+    .score-bar-track { background: rgba(255,255,255,0.1); border-radius: 100px; height: 7px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 100px; background: #F44336; transition: width 0.8s ease; }
+    .score-bar-fill.risk-alto { background: #FF9800; }
+    .score-bar-fill.risk-critico { background: #F44336; }
+    .score-bar-fill.risk-medio-alto { background: #FFC107; }
+    .score-bar-fill.risk-moderado { background: #8BC34A; }
+    .score-bar-fill.risk-bajo { background: #4CAF50; }
+    .score-metrics-grid { border-top: 1px solid var(--border); padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+    .score-metric-row { display: flex; flex-direction: column; gap: 3px; }
+    .smr-key { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .smr-val { font-size: 0.9rem; font-weight: 700; color: var(--text2); }
+    /* Puntos débiles */
+    .weak-points { display: flex; flex-direction: column; gap: 12px; }
+    .weak-point { background: rgba(255,152,0,0.06); border-left: 3px solid #FF9800; border-radius: 0 12px 12px 0; padding: 16px 20px; }
+    .weak-point-title { font-weight: 700; color: #FF9800; font-size: 0.94rem; margin-bottom: 6px; }
+    .weak-point-body { color: var(--text2); font-size: 0.93rem; line-height: 1.7; }
+    /* Incongruencias */
+    .incongruencias { display: flex; flex-direction: column; gap: 8px; }
+    .incongruencia { display: flex; gap: 12px; align-items: flex-start; background: rgba(244,67,54,0.05); border-radius: 10px; padding: 14px 16px; font-size: 0.93rem; color: var(--text2); line-height: 1.6; }
+    .incon-dot { color: #F44336; font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+
+    /* Plan de Acción */
+    .plan-items { display: flex; flex-direction: column; gap: 12px; }
+    .plan-item {
+        background: rgba(201,169,110,0.07); border-left: 3px solid var(--gold);
+        border-radius: 0 12px 12px 0; padding: 16px 20px;
+        display: flex; gap: 14px; align-items: flex-start;
+    }
+    .plan-num {
+        font-family: 'Poppins', sans-serif; font-weight: 800; color: var(--gold);
+        font-size: 1.1rem; line-height: 1; flex-shrink: 0; min-width: 20px;
+    }
+    .plan-item-title { font-weight: 700; color: var(--gold-light); font-size: 0.94rem; margin-bottom: 4px; }
+    .plan-item-body { color: var(--text2); font-size: 0.9rem; line-height: 1.65; }
+
+    .plan-lock {
+        margin-top: 28px;
+        background: linear-gradient(135deg, rgba(201,169,110,0.14), rgba(201,169,110,0.04));
+        border: 1.5px solid var(--gold);
+        border-radius: 16px; padding: 28px 26px;
+        box-shadow: 0 8px 28px rgba(201,169,110,0.12);
+    }
+    .plan-lock-eyebrow {
+        display: flex; align-items: center; gap: 8px;
+        font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.78rem;
+        text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold);
+        margin-bottom: 12px;
+    }
+    .plan-lock-text { color: var(--text); font-size: 1.02rem; line-height: 1.75; }
+    .plan-lock-text strong { color: var(--gold-light); }
+    .plan-lock-list { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+    .plan-lock-list li { position: relative; padding-left: 26px; color: var(--text); font-size: 1.02rem; line-height: 1.4; font-weight: 500; }
+    .plan-lock-list li::before { content: '→'; position: absolute; left: 0; top: 0; color: var(--gold); font-weight: 700; }
+
+    .footer-note { text-align: center; font-size: 0.72rem; color: var(--text3); margin-top: 40px; }
+
+    #report-loading, #report-error { text-align: center; padding: 80px 20px; color: var(--text2); }
+
+    @media print {
+        #pdf-btn { display: none; }
+        .header { position: static; backdrop-filter: none; }
+        body { background: var(--bg); }
+        @page { margin: 14mm 10mm; }
+        .plan-lock, .weak-point, .incongruencia, .plan-item, .score-widget { break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<header class="header">
+    <img src="logo-rr.png" alt="Ruarte Reports">
+    <span class="header-brand">Ruarte Reports</span>
+    <button id="pdf-btn" onclick="window.print()" style="display:none">Descargar PDF</button>
+</header>
+
+<section id="report-section">
+    <div id="report-loading">Cargando tu diagnóstico...</div>
+</section>
+
+<script>
+function riskCls(label) {
+    const l = (label || '').toLowerCase();
+    if (l.includes('crít') || l.includes('crit')) return 'risk-critico';
+    if (l.includes('alto'))     return 'risk-alto';
+    if (l.includes('medio'))    return 'risk-medio-alto';
+    if (l.includes('moderado')) return 'risk-moderado';
+    return 'risk-bajo';
+}
+
+function renderScoreWidget(raw) {
+    const rows = {};
+    raw.split('\n').forEach(line => {
+        if (!line.startsWith('|')) return;
+        const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+        if (cells.length >= 2 && !/^[-: ]+$/.test(cells[0])) {
+            rows[cells[0].toLowerCase()] = cells[1];
+        }
+    });
+    const scoreStr = rows['score general'] || '0/100';
+    const score = parseInt(scoreStr) || 0;
+    const riesgo = rows['riesgo general'] || '';
+    const cls = riskCls(riesgo);
+
+    const metricKeys = [
+        ['Concentración',   'concentración'],
+        ['Diversificación', 'diversificación real'],
+        ['Coherencia',      'coherencia con objetivo'],
+        ['Claridad',        'claridad estratégica'],
+        ['Urgencia',        'urgencia de revisión'],
+    ];
+    const metricsHtml = metricKeys.map(([label, key]) => {
+        const val = rows[key] || '—';
+        return `<div class="score-metric-row">
+            <div class="smr-key">${label}</div>
+            <div class="smr-val">${val}</div>
+        </div>`;
+    }).join('');
+
+    return `<div class="score-widget">
+        <div class="score-header">
+            <div class="score-big-num ${cls}">${score}</div>
+            <div class="score-right">
+                <div class="score-risk-tag ${cls}">Riesgo ${riesgo || '—'}</div>
+                <div class="score-sublabel">Índice de riesgo y estructura · escala 0–100</div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill ${cls}" style="width:0%" data-target="${score}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="score-metrics-grid">${metricsHtml}</div>
+    </div>`;
+}
+
+function renderWeakPoints(raw) {
+    const parts = ('_' + raw).split(/\n### /).slice(1);
+    const cards = parts.map(p => {
+        const lines = p.trim().split('\n');
+        const title = lines[0].trim();
+        const body  = lines.slice(1).join(' ').trim();
+        if (!title) return '';
+        return `<div class="weak-point">
+            <div class="weak-point-title">⚠ ${title}</div>
+            ${body ? `<div class="weak-point-body">${body}</div>` : ''}
+        </div>`;
+    }).filter(Boolean);
+    return `<div class="weak-points">${cards.join('')}</div>`;
+}
+
+function renderIncongruencias(raw) {
+    const items = raw.split('\n')
+        .map(l => l.trim())
+        .filter(l => /^[-•*]\s/.test(l))
+        .map(l => l.replace(/^[-•*]\s*/, '').trim())
+        .filter(Boolean);
+    const list = items.length ? items : raw.split('\n').map(l => l.trim()).filter(Boolean);
+    return `<div class="incongruencias">${list.map(item =>
+        `<div class="incongruencia"><span class="incon-dot">●</span><span>${item}</span></div>`
+    ).join('')}</div>`;
+}
+
+function renderPlanItems(raw) {
+    const parts = ('_' + raw).split(/\n### /).slice(1);
+    const cards = parts.map((p, i) => {
+        const lines = p.trim().split('\n');
+        const title = lines[0].trim();
+        const body  = lines.slice(1).join(' ').trim();
+        if (!title) return '';
+        return `<div class="plan-item">
+            <div class="plan-num">${i + 1}</div>
+            <div>
+                <div class="plan-item-title">${title}</div>
+                ${body ? `<div class="plan-item-body">${body}</div>` : ''}
+            </div>
+        </div>`;
+    }).filter(Boolean);
+    return `<div class="plan-items">${cards.join('')}</div>`;
+}
+
+function getSection(text, heading) {
+    const re = new RegExp('## ' + heading + '([\\s\\S]*?)(?=\\n## |\\n# Nota|$)', 'i');
+    const m = text.match(re);
+    return m ? m[1].trim() : '';
+}
+
+const PLAN_LOCK_HTML = `
+    <div class="plan-lock">
+        <div class="plan-lock-eyebrow">Tu próximo paso</div>
+        <div class="plan-lock-text">
+            Este plan te muestra <strong>qué</strong> tenés que resolver. Lo que todavía falta —y es un trabajo mucho más personalizado según cada persona— es definir:
+            <ul class="plan-lock-list">
+                <li>Lista de activos donde posicionarse</li>
+                <li>% de diversificación por activo</li>
+                <li>Timing de entrada y salida</li>
+                <li>Perfil de riesgo y cobertura durante la transición</li>
+            </ul>
+            Por eso queremos invitarte a descubrir las posibilidades con tu consultor asignado para ver si calificás a alguno de nuestros programas.
+        </div>
+    </div>`;
+
+function showError(msg) {
+    document.getElementById('report-section').innerHTML = `<div id="report-error">${msg}</div>`;
+}
+
+async function loadReport() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id) { showError('Falta el identificador del reporte.'); return; }
+
+    let data;
+    try {
+        const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'http://localhost:3000/api' : '/api';
+        const res = await fetch(`${API}/public-report?id=${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error();
+        data = await res.json();
+    } catch {
+        showError('No pudimos encontrar este reporte. Verificá el link con tu consultor.');
+        return;
+    }
+
+    const diag = data.diagnostico || '';
+    const titleM = diag.match(/^# ([^\n#][^\n]*)/m);
+    const resumen   = getSection(diag, 'Resumen ejecutivo');
+    const scoreRaw  = getSection(diag, 'Score de riesgo y estructura');
+    const puntosRaw = getSection(diag, 'Puntos d[ée]biles detectados');
+    const inconRaw  = getSection(diag, 'Incongruencias detectadas');
+
+    const nombre = [data.nombre, data.apellido].filter(Boolean).join(' ') || data.email || '';
+    const fecha = data.created_at
+        ? new Date(data.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+
+    let html = `
+        <div class="report-eyebrow">Diagnóstico + Plan de Acción · Sesión 1:1</div>
+        <div class="report-lead-meta">Preparado para ${nombre}${fecha ? ' · ' + fecha : ''}</div>
+        <h1 class="report-title">${titleM ? titleM[1].trim() : 'Diagnóstico inicial de tu portafolio'}</h1>`;
+
+    if (resumen) html += `
+        <div class="report-block">
+            <div class="report-block-label">Resumen ejecutivo</div>
+            <div class="report-summary">${resumen}</div>
+        </div>`;
+
+    if (scoreRaw) html += `
+        <div class="report-block">
+            <div class="report-block-label">Score de riesgo y estructura</div>
+            ${renderScoreWidget(scoreRaw)}
+        </div>`;
+
+    if (puntosRaw) html += `
+        <div class="report-block">
+            <div class="report-block-label">Puntos débiles detectados</div>
+            ${renderWeakPoints(puntosRaw)}
+        </div>`;
+
+    if (inconRaw) html += `
+        <div class="report-block">
+            <div class="report-block-label">Incongruencias detectadas</div>
+            ${renderIncongruencias(inconRaw)}
+        </div>`;
+
+    if (data.plan_accion && data.plan_accion.trim()) {
+        html += `
+            <div class="report-block">
+                <div class="report-block-label">Plan de acción — qué tenés que resolver</div>
+                ${renderPlanItems(data.plan_accion)}
+                ${PLAN_LOCK_HTML}
+            </div>`;
+    }
+
+    html += `<div class="footer-note">Documento confidencial preparado por Ruarte Reports para uso exclusivo del cliente y su consultor asignado.</div>`;
+
+    document.getElementById('report-section').innerHTML = html;
+    document.getElementById('pdf-btn').style.display = '';
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.score-bar-fill[data-target]').forEach(el => {
+            el.style.width = el.dataset.target + '%';
+        });
+    });
+}
+
+loadReport();
+</script>
+
+</body>
+</html>
