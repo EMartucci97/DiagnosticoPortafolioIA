@@ -1326,7 +1326,7 @@
 const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
 const WHATSAPP_LINK     = 'https://wa.link/amvekl';
 const LEAD_CANAL        = (() => {
-    if (window.location.hostname === 'app.ruartereports.org') return 'agendado';
+    if (window.location.hostname === 'diagnostico.ruartereports.org') return 'agendado';
     const c = new URLSearchParams(window.location.search).get('canal');
     return (c === 'outbound' || c === 'agendado') ? c : 'inbound';
 })();
