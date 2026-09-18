@@ -297,7 +297,11 @@ function showError(msg) {
 
 async function loadReport() {
     const params = new URLSearchParams(location.search);
-    const id = params.get('id');
+    let id = params.get('id');
+    if (!id) {
+        const m = location.pathname.match(/(\d+)\/?$/);
+        if (m) id = m[1];
+    }
     if (!id) { showError('Falta el identificador del reporte.'); return; }
 
     let data;
