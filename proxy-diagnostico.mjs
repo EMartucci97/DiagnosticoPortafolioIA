@@ -3,6 +3,7 @@ import https from 'https';
 import pg from 'pg';
 import { createRequire } from 'module';
 const { sanitizeOrigen } = createRequire(import.meta.url)('./api/_origen.js');
+const { notificarDiagnosticoCompletado } = createRequire(import.meta.url)('./api/_discord.js');
 
 const { Pool } = pg;
 const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
@@ -147,6 +148,7 @@ http.createServer(async (req, res) => {
                 [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), ['outbound', 'inbound', 'agendado'].includes(canal) ? canal : null, id]
             );
             console.log(`[DB] Datos id=${id} → ${email}`);
+            await notificarDiagnosticoCompletado(pool, id);
             return jsonRes(res, 200, { ok: true });
         }
 

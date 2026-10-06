@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { notificarDiagnosticoCompletado } = require('./_discord');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -19,6 +20,9 @@ module.exports = async function handler(req, res) {
             `UPDATE diagnosticos SET email = $1, nombre = $2, apellido = $3, celular = $4, canal = COALESCE($5, canal) WHERE id = $6`,
             [email.trim(), (nombre || '').trim(), (apellido || '').trim(), (celular || '').trim(), ['outbound', 'inbound', 'agendado'].includes(canal) ? canal : null, id]
         );
+        // se espera antes de responder porque Vercel congela la función tras la respuesta;
+        // el front no espera este request y el helper nunca tira (timeout 5s)
+        await notificarDiagnosticoCompletado(pool, id);
         res.status(200).json({ ok: true });
     } catch(e) {
         res.status(500).json({ error: e.message });
