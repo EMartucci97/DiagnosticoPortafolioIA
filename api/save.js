@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const { generatePlanAccion } = require('./_plan-accion');
+const { sanitizeOrigen } = require('./_origen');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -14,7 +15,7 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
     try {
-        const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal } = req.body;
+        const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal, origen } = req.body;
 
         let planAccion = '';
         if (diagnostico) {
@@ -26,8 +27,8 @@ module.exports = async function handler(req, res) {
         }
 
         const { rows } = await pool.query(
-            `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal, plan_accion)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal, plan_accion, origen)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
             [
                 typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
                 typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
@@ -35,7 +36,8 @@ module.exports = async function handler(req, res) {
                 notaInterna || '',
                 score ?? null,
                 (canal === 'outbound' || canal === 'agendado') ? canal : 'inbound',
-                planAccion
+                planAccion,
+                sanitizeOrigen(origen)
             ]
         );
         res.status(200).json({ ok: true, id: rows[0].id });

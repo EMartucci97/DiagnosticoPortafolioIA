@@ -1141,7 +1141,7 @@
 
 <!-- ── HEADER ── -->
 <header class="header" data-block="header">
-    <img src="logo-rr.png" alt="Ruarte Reports">
+    <img src="/logo-rr.png" alt="Ruarte Reports">
     <span class="header-brand" id="header-brand">Ruarte Reports</span>
 </header>
 
@@ -1253,15 +1253,15 @@
     <div id="report-content" class="md"></div>
     <div id="report-cta" style="display:none">
         <p id="cta-text"></p>
-        <a id="wa-btn" href="#" target="_blank"><span id="cta-btn-text">Comunicarme con Roberto Ruarte</span></a>
+        <a id="wa-btn" href="#" target="_blank"><span id="cta-btn-text">Escribirnos por WhatsApp</span></a>
     </div>
 </section>
 
 <section id="email-gate" style="display:none">
     <div class="email-gate-inner">
-        <div class="email-gate-check">✓</div>
-        <h2 class="email-gate-title" id="email-gate-title">Tu diagnóstico está listo</h2>
-        <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y coordinamos la entrega con uno de nuestros consultores.</p>
+        <div class="email-gate-check">⏳</div>
+        <h2 class="email-gate-title" id="email-gate-title">Tu diagnóstico se está preparando</h2>
+        <p class="email-gate-sub" id="email-gate-sub">Dejanos tus datos y coordinamos la entrega con uno de nuestros consultores asignados.</p>
         <div class="email-gate-row">
             <input type="text" id="diag-nombre" placeholder="Nombre" autocomplete="given-name"
                 onkeydown="if(event.key==='Enter') document.getElementById('diag-apellido').focus()">
@@ -1298,7 +1298,6 @@
             </div>
             <button class="email-gate-btn" onclick="submitEmail()" id="email-submit-btn">Solicitar diagnóstico →</button>
         </div>
-        <p class="email-gate-note">Sin spam. Solo tu diagnóstico.</p>
     </div>
 </section>
 
@@ -1306,9 +1305,7 @@
     <div class="email-gate-inner">
         <div class="email-gate-check">✓</div>
         <h2 class="email-gate-title">¡Listo, ya tenemos tus datos!</h2>
-        <p class="email-gate-sub">Tu diagnóstico ya está generado. Escribinos por WhatsApp y uno de nuestros consultores te lo comparte y lo repasa con vos.</p>
-        <a id="thanks-wa-btn" class="thanks-wa-btn" href="#" target="_blank">Pedir mi diagnóstico por WhatsApp</a>
-        <p class="email-gate-note" style="margin-top:20px;">Guardá tu teléfono a mano — te contactamos a la brevedad.</p>
+        <p class="email-gate-sub">Tu diagnóstico fue asignado a uno de nuestros consultores. A la brevedad se van a comunicar contigo por WhatsApp para entregártelo.</p>
     </div>
 </section>
 
@@ -1324,11 +1321,34 @@
 <script>
 // ── CONFIG ─────────────────────────────────────────
 const API_ENDPOINT      = window.location.hostname === 'localhost' ? 'http://localhost:3031' : '/api';
-const WHATSAPP_LINK     = 'https://wa.link/amvekl';
+const WHATSAPP_LINK     = 'https://wa.me/5491124082838?text=' + encodeURIComponent('Hola Roberto ✋, hice mi diagnóstico de portafolio y me gustaría conocer las opciones de formación para aprender a gestionar mis inversiones.');
 const LEAD_CANAL        = (() => {
-    if (window.location.hostname === 'diagnostico.ruartereports.org') return 'agendado';
+    if (/^\/agendado\/?$/.test(window.location.pathname)) return 'agendado';
     const c = new URLSearchParams(window.location.search).get('canal');
     return (c === 'outbound' || c === 'agendado') ? c : 'inbound';
+})();
+// Origen del lead (UTMs / fbclid / referrer externo). Si la URL trae UTMs se guardan en
+// localStorage, así no se pierden si la persona vuelve después por un link sin parámetros.
+const LEAD_ORIGEN       = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const actual = {};
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(k => {
+        const v = params.get(k);
+        if (v) actual[k] = v;
+    });
+    try {
+        if (document.referrer && new URL(document.referrer).hostname !== window.location.hostname) actual.referrer = document.referrer;
+    } catch (e) {}
+    if (actual.utm_source || actual.fbclid) {
+        actual.landing_at = new Date().toISOString();
+        try { localStorage.setItem('rr_origen', JSON.stringify(actual)); } catch (e) {}
+        return actual;
+    }
+    try {
+        const guardado = JSON.parse(localStorage.getItem('rr_origen') || 'null');
+        if (guardado) return guardado;
+    } catch (e) {}
+    return Object.keys(actual).length ? actual : null;
 })();
 
 if (LEAD_CANAL === 'agendado') {
@@ -2949,6 +2969,11 @@ function finishQuiz() {
     document.getElementById('quiz-section').style.display = 'none';
     const gate = document.getElementById('email-gate');
     gate.style.display = 'flex';
+    if (LEAD_CANAL !== 'agendado' && getTotalCapital() < 10000) {
+        document.getElementById('email-gate-sub').textContent = 'Dejanos tus datos y te lo mostramos en pantalla apenas esté listo.';
+    } else if (LEAD_CANAL !== 'agendado') {
+        document.getElementById('email-gate-sub').textContent = 'Dejanos tus datos y coordinamos la entrega con uno de nuestros consultores asignados.';
+    }
     gate.scrollIntoView({ behavior: 'smooth' });
     setTimeout(() => document.getElementById('diag-email').focus(), 300);
     diagnosisPromise = generateReport();
@@ -3352,14 +3377,7 @@ function splitNotaInterna(text) {
 }
 
 // ── CTA BAR ───────────────────────────────────────────
-function showCTA(reportText) {
-    const scoreMatch = reportText.match(/Score general\s*\|\s*(\d+)/i);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
-    let riesgo = 'bajo';
-    if (score >= 61) riesgo = 'alto';
-    else if (score >= 41) riesgo = 'medio-alto';
-    else if (score >= 21) riesgo = 'moderado';
-
+function showCTA() {
     const waBtn = document.getElementById('wa-btn');
     waBtn.href = WHATSAPP_LINK;
     waBtn.addEventListener('click', () => {
@@ -3372,9 +3390,7 @@ function showCTA(reportText) {
     }, { once: true });
 
     const ctaEl = document.getElementById('report-cta');
-    ctaEl.querySelector('p').textContent = riesgo === 'alto'
-        ? 'Tu portafolio tiene señales importantes que requieren atención. Comunicate con Roberto Ruarte para solucionar este problema.'
-        : 'Tu portafolio tiene señales importantes que requieren atención. Comunicate con Roberto Ruarte para solucionar este problema.';
+    ctaEl.querySelector('p').textContent = '¿Querés aprender a gestionar tu portafolio por tu cuenta? Escribinos y exploramos juntos las posibilidades de formación.';
     ctaEl.style.display = 'block';
 }
 
@@ -3392,7 +3408,8 @@ async function saveDiagnosis(diagnostico) {
                 diagnostico,
                 notaInterna,
                 score,
-                canal: LEAD_CANAL
+                canal: LEAD_CANAL,
+                origen: LEAD_ORIGEN
             })
         });
         const data = await res.json();
@@ -3442,6 +3459,7 @@ async function submitEmail() {
     const btn = document.getElementById('email-submit-btn');
     btn.disabled = true;
     btn.textContent = 'Un momento...';
+    const esCalificado = getTotalCapital() >= 10000;
     // guardar datos (fire & forget — no bloqueamos el flujo).
     // El diagnóstico puede seguir generándose en segundo plano: esperamos a que
     // termine (o creamos una fila vacía si falló) para no perder el contacto del lead.
@@ -3457,7 +3475,8 @@ async function submitEmail() {
                         quizAnswers,
                         diagnostico: '',
                         notaInterna: '[Diagnóstico no generado — falló la llamada a la IA. Armar manualmente con el portafolio/respuestas guardados.]',
-                        canal: LEAD_CANAL
+                        canal: LEAD_CANAL,
+                        origen: LEAD_ORIGEN
                     })
                 });
                 const data = await res.json();
@@ -3472,22 +3491,23 @@ async function submitEmail() {
         }).catch(() => {});
     })();
 
-    document.getElementById('email-gate').style.display = 'none';
-
     if (LEAD_CANAL === 'agendado') {
+        document.getElementById('email-gate').style.display = 'none';
         document.getElementById('agendado-thanks').style.display = 'flex';
-    } else {
+    } else if (esCalificado) {
+        document.getElementById('email-gate').style.display = 'none';
         document.getElementById('thanks-section').style.display = 'flex';
-        const waBtn = document.getElementById('thanks-wa-btn');
-        waBtn.href = WHATSAPP_LINK;
-        waBtn.addEventListener('click', () => {
-            if (!savedDiagId) return;
-            fetch(API_ENDPOINT + '/track-event', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event: 'wa_click', id: savedDiagId })
-            }).catch(() => {});
-        }, { once: true });
+    } else {
+        // No calificado: se le entrega el reporte directo, sin pantalla de agradecimiento intermedia.
+        // Esto implica esperar a que termine de generarse (el botón queda deshabilitado en "Un momento...").
+        if (diagnosisPromise) { try { await diagnosisPromise; } catch (e) {} }
+        document.getElementById('email-gate').style.display = 'none';
+        if (reportGenerated && pendingReportText) {
+            showReport(pendingReportText);
+            showCTA();
+        } else {
+            document.getElementById('thanks-section').style.display = 'flex';
+        }
     }
 
     if (window.location.hostname !== 'localhost') fetch(API_ENDPOINT + '/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'diag_completed' }) }).catch(() => {});
@@ -3661,11 +3681,30 @@ document.getElementById('send-btn').onclick = function() {
 if (new URLSearchParams(window.location.search).get('dev') === '1') {
     const DEV_SECTIONS = ['hero', 'quiz-section', 'portfolio-step', 'report-section', 'email-gate', 'thanks-section', 'agendado-thanks'];
 
-    const DEV_REPORT_MD = '# Diagnóstico de ejemplo\n' +
-        '## Resumen ejecutivo\nTexto de ejemplo para preview del reporte.\n' +
-        '## Score de riesgo y estructura\nScore: 65/100. Estructura balanceada.\n' +
-        '## Puntos débiles detectados\n- Punto débil 1\n- Punto débil 2\n' +
-        '## Incongruencias detectadas\n- Ninguna detectada en este ejemplo.';
+    const DEV_REPORT_MD = '# Diagnóstico de tu Portafolio\n' +
+        '## Resumen ejecutivo\n' +
+        'Tu portafolio muestra una concentración fuerte en un solo tipo de activo y poca cobertura frente a la volatilidad del peso argentino. ' +
+        'Si bien generaste retornos nominales positivos en los últimos meses, la estructura actual no responde a un objetivo de plazo claro, ' +
+        'lo que aumenta el riesgo de decisiones reactivas ante cambios de contexto. Hay margen concreto para reordenar la composición sin resignar liquidez.\n' +
+        '## Score de riesgo y estructura\n' +
+        '| Score general | 42/100 |\n' +
+        '| Riesgo general | Alto |\n' +
+        '| Concentración | Alta |\n' +
+        '| Diversificación real | Baja |\n' +
+        '| Coherencia con objetivo | Parcial |\n' +
+        '| Claridad estratégica | Baja |\n' +
+        '| Urgencia de revisión | Alta |\n' +
+        '## Puntos débiles detectados\n' +
+        '### Concentración excesiva en un solo activo\n' +
+        'Más del 60% del capital está en un mismo instrumento, lo que expone el portafolio completo a un evento puntual de ese activo o sector.\n' +
+        '### Sin cobertura frente a la devaluación\n' +
+        'La porción en pesos sin cobertura dolarizada pierde poder adquisitivo real mes a mes frente a la inflación en dólares.\n' +
+        '### Ausencia de horizonte temporal definido\n' +
+        'No hay un objetivo de plazo (corto, mediano o largo) que justifique la mezcla actual de activos líquidos e ilíquidos.\n' +
+        '## Incongruencias detectadas\n' +
+        '- Declarás objetivo de largo plazo pero el 70% del capital está en instrumentos de liquidez inmediata.\n' +
+        '- Mencionás preferencia por bajo riesgo pero la concentración actual implica alta exposición a un solo evento.\n' +
+        '- No hay relación entre el monto reservado como "fondo de emergencia" y tus gastos mensuales declarados.';
 
     function devHideAll() {
         DEV_SECTIONS.forEach(id => {
@@ -3709,11 +3748,16 @@ if (new URLSearchParams(window.location.search).get('dev') === '1') {
             document.getElementById('diag-email').value = 'juan@example.com';
             document.getElementById('diag-celular').value = '98967051';
         },
-        'Gracias (WhatsApp)': () => {
+        'Gracias (calificado)': () => {
             devHideAll();
             document.getElementById('hero').style.display = 'none';
             document.getElementById('thanks-section').style.display = 'flex';
-            document.getElementById('thanks-wa-btn').href = WHATSAPP_LINK;
+        },
+        'Reporte (descalificado)': () => {
+            devHideAll();
+            document.getElementById('hero').style.display = 'none';
+            showReport(DEV_REPORT_MD);
+            showCTA();
         },
         'Gracias (Agendado)': () => {
             devHideAll();

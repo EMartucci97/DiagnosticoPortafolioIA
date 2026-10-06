@@ -15,9 +15,29 @@ module.exports = async function handler(req, res) {
             const user = requireRole(req, res, 'sales');
             if (!user) return;
             const { clasificacion } = req.body || {};
-            const allowed = [null, 'calificado', 'no_calificado', 'en_proceso'];
+            const allowed = [null, 'calificado', 'no_calificado'];
             if (!allowed.includes(clasificacion)) { res.status(400).json({ error: 'Clasificación inválida' }); return; }
             await pool.query(`UPDATE diagnosticos SET clasificacion = $1 WHERE id = $2`, [clasificacion, id]);
+            res.status(200).json({ ok: true });
+        } else if (action === 'estado') {
+            const user = requireRole(req, res, 'sales');
+            if (!user) return;
+            const { estado } = req.body || {};
+            const allowed = ['nuevo', 'contactado', 'agendado', 'cerrado', 'perdido'];
+            if (!allowed.includes(estado)) { res.status(400).json({ error: 'Estado inválido' }); return; }
+            await pool.query(`UPDATE diagnosticos SET estado_comercial = $1 WHERE id = $2`, [estado, id]);
+            res.status(200).json({ ok: true });
+        } else if (action === 'asignar') {
+            const user = requireRole(req, res, 'sales');
+            if (!user) return;
+            const asignado = (req.body || {}).asignado || null;
+            if (asignado) {
+                const { rows } = await pool.query(
+                    `SELECT 1 FROM admin_users WHERE username = $1 AND role IN ('superadmin','admin','sales')`, [asignado]
+                );
+                if (!rows.length) { res.status(400).json({ error: 'Consultor inválido' }); return; }
+            }
+            await pool.query(`UPDATE diagnosticos SET asignado_a = $1 WHERE id = $2`, [asignado, id]);
             res.status(200).json({ ok: true });
         } else if (action === 'delete') {
             const user = requireRole(req, res, 'admin');

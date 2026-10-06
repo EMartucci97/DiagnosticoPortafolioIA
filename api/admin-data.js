@@ -15,10 +15,13 @@ module.exports = async function handler(req, res) {
         const { rows } = await pool.query(
             `SELECT id, created_at, email, portfolio, quiz_answers, diagnostico, plan_accion,
                     nota_interna, score, clasificacion, wa_click_at,
-                    nombre, apellido, celular, canal
+                    nombre, apellido, celular, canal, estado_comercial, asignado_a, origen
              FROM diagnosticos ORDER BY created_at DESC`
         );
-        res.status(200).json({ rows });
+        const { rows: users } = await pool.query(
+            `SELECT username FROM admin_users WHERE role IN ('superadmin','admin','sales') ORDER BY username`
+        );
+        res.status(200).json({ rows, consultores: users.map(u => u.username) });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

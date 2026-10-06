@@ -2,6 +2,7 @@
   "routes": [
     { "src": "^/$", "dest": "/diagnostico.html" },
     { "src": "^/diagnostico$", "dest": "/diagnostico.html" },
+    { "src": "^/agendado/?$", "dest": "/diagnostico.html" },
     { "src": "^/admin$", "dest": "/admin.html" },
     { "src": "^/reporte/(.*)$", "dest": "/reporte.html" }
   ]

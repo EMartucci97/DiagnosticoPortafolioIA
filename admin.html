@@ -59,13 +59,13 @@
     .panel-header h1 { font-size: 1rem; font-weight: 600; color: var(--gold); margin-bottom: 4px; }
     .panel-meta { font-size: 0.78rem; color: var(--text3); }
     .header-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    #search-input, #filter-select, #canal-filter {
+    #search-input, #filter-select, #canal-filter, #estado-filter, #asignado-filter, #origen-filter, #creativo-filter {
         padding: 9px 14px; background: var(--bg2); border: 1px solid var(--border);
         border-radius: 8px; color: var(--text); font-size: 0.82rem; outline: none;
     }
     #search-input { width: 200px; }
-    #search-input:focus, #filter-select:focus, #canal-filter:focus { border-color: var(--gold); }
-    #filter-select option, #canal-filter option { background: var(--bg2); }
+    #search-input:focus, #filter-select:focus, #canal-filter:focus, #estado-filter:focus, #asignado-filter:focus, #origen-filter:focus, #creativo-filter:focus { border-color: var(--gold); }
+    #filter-select option, #canal-filter option, #estado-filter option, #asignado-filter option, #origen-filter option, #creativo-filter option { background: var(--bg2); }
     .btn-outline {
         padding: 9px 14px; background: none; border: 1px solid var(--border);
         border-radius: 8px; color: var(--text2); font-size: 0.82rem; cursor: pointer;
@@ -117,6 +117,8 @@
     .canal-inbound  { background: rgba(82,147,224,0.15);  color: var(--blue); }
     .canal-outbound { background: rgba(201,168,76,0.15);  color: var(--gold); }
     .canal-agendado { background: rgba(120,200,150,0.15); color: #4CAF50; }
+    .origen-cell { font-size: 0.78rem; white-space: nowrap; }
+    .origen-cell small { display: block; color: var(--text3); font-size: 0.7rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
     td.clasif-col { min-width: 150px; }
     .clasif-select {
         width: 100%; padding: 6px 8px; background: var(--bg3);
@@ -126,7 +128,12 @@
     .clasif-select:focus { border-color: var(--gold); }
     .clasif-select.calificado    { border-color: var(--green); color: var(--green); }
     .clasif-select.no_calificado { border-color: var(--red);   color: var(--red);   }
-    .clasif-select.en_proceso    { border-color: var(--blue);  color: var(--blue);  }
+    .clasif-select.estado-contactado { border-color: var(--blue);  color: var(--blue);  }
+    .clasif-select.estado-agendado   { border-color: var(--gold);  color: var(--gold);  }
+    .clasif-select.estado-cerrado    { border-color: var(--green); color: var(--green); }
+    .clasif-select.estado-perdido    { border-color: var(--red);   color: var(--red);   }
+    .lite-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; font-weight: 700;
+        background: rgba(37,211,102,0.15); color: #25D366; }
     .clasif-select option { background: var(--bg2); color: var(--text); }
     .action-btns { display: flex; gap: 6px; align-items: center; }
     .ver-btn {
@@ -303,20 +310,43 @@
         </div>
         <div class="header-controls">
             <span class="user-badge" id="user-info"></span>
-            <input type="text" id="search-input" placeholder="Buscar por email…" oninput="applyFilters()">
+            <input type="text" id="search-input" placeholder="Buscar por nombre, email o celular…" oninput="applyFilters()">
             <select id="filter-select" onchange="applyFilters()">
-                <option value="">Todos</option>
+                <option value="">Todas las calificaciones</option>
                 <option value="calificado">Calificados</option>
                 <option value="no_calificado">No calificados</option>
-                <option value="en_proceso">En proceso</option>
+                <option value="lite">Interesados en Lite</option>
                 <option value="sin_clasificar">Sin clasificar</option>
                 <option value="duplicados">Emails duplicados</option>
+            </select>
+            <select id="estado-filter" onchange="applyFilters()">
+                <option value="">Todos los estados</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="contactado">Contactado</option>
+                <option value="agendado">Agendado</option>
+                <option value="cerrado">Cerrado</option>
+                <option value="perdido">Perdido</option>
+            </select>
+            <select id="asignado-filter" onchange="applyFilters()">
+                <option value="">Todos los consultores</option>
+                <option value="__none">Sin asignar</option>
             </select>
             <select id="canal-filter" onchange="applyFilters()">
                 <option value="">Todos los canales</option>
                 <option value="inbound">Inbound</option>
                 <option value="outbound">Outbound</option>
                 <option value="agendado">Agendado</option>
+            </select>
+            <select id="origen-filter" onchange="applyFilters()">
+                <option value="">Todos los orígenes</option>
+                <option value="meta_ads">Meta Ads</option>
+                <option value="organico">Orgánico</option>
+                <option value="webinar">Webinar</option>
+                <option value="meta_sin_utm">Meta/IG sin UTM</option>
+                <option value="directo">Directo / sin dato</option>
+            </select>
+            <select id="creativo-filter" onchange="applyFilters()">
+                <option value="">Todos los creativos</option>
             </select>
             <button class="btn-gold" onclick="toggleInsights()" data-min-role="admin">Insights</button>
             <button class="btn-gold" onclick="showUsersScreen()" data-min-role="superadmin">Usuarios</button>
@@ -327,8 +357,8 @@
         <table>
             <thead>
                 <tr>
-                    <th>#</th><th>Fecha</th><th>Nombre</th><th>Celular</th><th>Canal</th><th>Email</th><th>Capital</th>
-                    <th>Score</th><th>WA</th><th>Clasificación</th><th></th>
+                    <th>#</th><th>Fecha</th><th>Nombre</th><th>Celular</th><th>Canal</th><th>Origen</th><th>Email</th><th>Capital</th>
+                    <th>Score</th><th>Escribió WA</th><th>Calificación</th><th>Estado</th><th>Asignado</th><th></th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
@@ -481,7 +511,7 @@ function slugify(str) {
 const ROLE_LEVEL = { readonly: 0, sales: 1, admin: 2, superadmin: 3 };
 const ROLE_LABELS = { superadmin: 'Super Admin', admin: 'Admin', sales: 'Ventas', readonly: 'Solo lectura' };
 
-let allRows = [], allUsers = [];
+let allRows = [], allUsers = [], consultores = [];
 let savedToken = '', userRole = '', currentUsername = '';
 let pendingDeleteId = null, pendingDeleteUserId = null;
 let currentModalId = null;
@@ -583,6 +613,14 @@ async function loadPanelData() {
         if (res.status === 401) { doLogout(); return; }
         const data = await res.json();
         allRows = data.rows || [];
+        consultores = data.consultores || [];
+        const asigSel = document.getElementById('asignado-filter');
+        asigSel.length = 2;
+        consultores.forEach(c => asigSel.add(new Option(c, c)));
+        const creaSel = document.getElementById('creativo-filter');
+        creaSel.length = 1;
+        [...new Set(allRows.map(r => origenInfo(r).creativo).filter(Boolean))].sort()
+            .forEach(c => creaSel.add(new Option(c, c)));
         showScreen('panel');
         applyRoleUI();
         applyFilters();
@@ -622,27 +660,68 @@ function extractCapital(portfolioText) {
 function resolveClasif(row) {
     if (row.clasificacion) return row.clasificacion;
     const cap = extractCapital(row.portfolio);
-    if (cap !== null && cap >= 10000) return 'calificado';
-    return '';
+    if (cap === null) return '';
+    return cap >= 10000 ? 'calificado' : 'no_calificado';
 }
 function buildDupSet(rows) {
     const counts = {};
     rows.forEach(r => { if (r.email) counts[r.email.toLowerCase()] = (counts[r.email.toLowerCase()] || 0) + 1; });
     return new Set(Object.entries(counts).filter(([, c]) => c > 1).map(([e]) => e));
 }
+function escHtml(v) {
+    return String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+// Origen del lead a partir de las UTMs guardadas por la landing (columna origen JSONB)
+const ORIGEN_LABELS = { meta_ads: 'Meta Ads', organico: 'Orgánico', webinar: 'Webinar', meta_sin_utm: 'Meta/IG sin UTM', directo: 'Directo / sin dato' };
+function origenInfo(r) {
+    const o = r.origen || {};
+    const src = (o.utm_source || '').toLowerCase();
+    let fuente;
+    if (src === 'meta_ads' || (src === 'meta' && /paid|cpc|ads/.test((o.utm_medium || '').toLowerCase()))) fuente = 'meta_ads';
+    else if (src === 'organico') fuente = 'organico';
+    else if (src === 'webinar') fuente = 'webinar';
+    else if (src) fuente = src;
+    else if (o.fbclid) fuente = 'meta_sin_utm';
+    else fuente = 'directo';
+    let detalle = [o.utm_medium, o.utm_campaign].filter(Boolean).join(' · ');
+    if (!src && o.referrer) { try { detalle = new URL(o.referrer).hostname; } catch (e) {} }
+    return { fuente, label: ORIGEN_LABELS[fuente] || src, creativo: o.utm_content || '', detalle };
+}
+function isLiteLead(r) { return !!r.wa_click_at && resolveClasif(r) === 'no_calificado'; }
 function applyFilters() {
-    const q = document.getElementById('search-input').value.toLowerCase();
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const qDigits = q.replace(/\D/g, '');
     const filter = document.getElementById('filter-select').value;
     const canalFilter = document.getElementById('canal-filter').value;
+    const estadoFilter = document.getElementById('estado-filter').value;
+    const asignadoFilter = document.getElementById('asignado-filter').value;
+    const origenFilter = document.getElementById('origen-filter').value;
+    const creativoFilter = document.getElementById('creativo-filter').value;
     const dupSet = buildDupSet(allRows);
-    let rows = allRows.filter(r => (r.email || '').toLowerCase().includes(q));
+    let rows = allRows.filter(r => {
+        if (!q) return true;
+        const texto = [r.nombre, r.apellido, r.email].filter(Boolean).join(' ').toLowerCase();
+        if (texto.includes(q)) return true;
+        return qDigits.length >= 3 && (r.celular || '').replace(/\D/g, '').includes(qDigits);
+    });
     if (filter === 'calificado')     rows = rows.filter(r => resolveClasif(r) === 'calificado');
     if (filter === 'no_calificado')  rows = rows.filter(r => resolveClasif(r) === 'no_calificado');
-    if (filter === 'en_proceso')     rows = rows.filter(r => resolveClasif(r) === 'en_proceso');
+    if (filter === 'lite')           rows = rows.filter(isLiteLead);
     if (filter === 'sin_clasificar') rows = rows.filter(r => !resolveClasif(r));
+    if (estadoFilter)                rows = rows.filter(r => (r.estado_comercial || 'nuevo') === estadoFilter);
+    if (asignadoFilter === '__none') rows = rows.filter(r => !r.asignado_a);
+    else if (asignadoFilter)         rows = rows.filter(r => r.asignado_a === asignadoFilter);
     if (filter === 'duplicados')     rows = rows.filter(r => r.email && dupSet.has(r.email.toLowerCase()));
     if (canalFilter)                 rows = rows.filter(r => (r.canal || 'inbound') === canalFilter);
+    if (origenFilter)                rows = rows.filter(r => origenInfo(r).fuente === origenFilter);
+    if (creativoFilter)              rows = rows.filter(r => origenInfo(r).creativo === creativoFilter);
     renderTable(rows, dupSet);
+    // Resumen del filtro de origen: cuántos leads y calificados trajo
+    if (origenFilter || creativoFilter) {
+        const cal = rows.filter(r => resolveClasif(r) === 'calificado').length;
+        document.getElementById('total-meta').textContent +=
+            '  —  filtro: ' + rows.length + ' lead' + (rows.length !== 1 ? 's' : '') + ' · ' + cal + ' calificado' + (cal !== 1 ? 's' : '');
+    }
 }
 
 // ── TABLE ──
@@ -662,7 +741,7 @@ function renderTable(rows, dupSet) {
         (calificados ? ' · ' + calificados + ' calificado' + (calificados !== 1 ? 's' : '') : '');
 
     if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state">No hay registros.</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14"><div class="empty-state">No hay registros.</div></td></tr>';
         return;
     }
 
@@ -677,7 +756,8 @@ function renderTable(rows, dupSet) {
         const capStr = cap !== null
             ? '<span class="' + (cap >= 10000 ? 'capital-ok' : 'capital-low') + '">USD ' + cap.toLocaleString('es-AR') + '</span>'
             : '<span style="color:var(--text3)">—</span>';
-        const scoreClass = !r.score ? '' : r.score <= 3 ? 'score-low' : r.score <= 6 ? 'score-mid' : 'score-high';
+        // Score 0-100 (más alto = más riesgo), mismas bandas que el reporte
+        const scoreClass = !r.score ? '' : r.score <= 20 ? 'score-low' : r.score <= 40 ? 'score-mid' : 'score-high';
         const scoreBadge = r.score
             ? '<span class="score-badge ' + scoreClass + '">' + r.score + '</span>'
             : '<span style="color:var(--text3)">—</span>';
@@ -692,14 +772,36 @@ function renderTable(rows, dupSet) {
         const canalVal = r.canal || 'inbound';
         const canalLabels = { inbound: 'Inbound', outbound: 'Outbound', agendado: 'Agendado' };
         const canalDisplay = '<span class="canal-badge canal-' + canalVal + '">' + (canalLabels[canalVal] || 'Inbound') + '</span>';
+        const og = origenInfo(r);
+        const origenDisplay = '<div class="origen-cell">' + escHtml(og.label) +
+            (og.creativo ? '<small title="' + escHtml(og.creativo) + '">' + escHtml(og.creativo) + '</small>' : '') +
+            (og.detalle ? '<small title="' + escHtml(og.detalle) + '">' + escHtml(og.detalle) + '</small>' : '') + '</div>';
         const clasifVal = resolveClasif(r);
-        const isAuto = !r.clasificacion && clasifVal === 'calificado';
+        const isAuto = !r.clasificacion && !!clasifVal;
+        const estadoVal = r.estado_comercial || 'nuevo';
+        const estadoLabels = { nuevo: 'Nuevo', contactado: 'Contactado', agendado: 'Agendado', cerrado: 'Cerrado', perdido: 'Perdido' };
+        const estadoCell = canClassify
+            ? `<select class="clasif-select estado-${estadoVal}" onchange="updateEstado(${r.id}, this)">
+                ${Object.entries(estadoLabels).map(([v, l]) => `<option value="${v}" ${v === estadoVal ? 'selected' : ''}>${l}</option>`).join('')}
+               </select>`
+            : `<span style="color:var(--text3);font-size:0.8rem">${estadoLabels[estadoVal] || estadoVal}</span>`;
+        const asignadoOpts = consultores.includes(r.asignado_a) || !r.asignado_a ? consultores : [r.asignado_a, ...consultores];
+        const asignadoCell = canClassify
+            ? `<select class="clasif-select" onchange="updateAsignado(${r.id}, this)">
+                <option value="" ${!r.asignado_a ? 'selected' : ''}>Sin asignar</option>
+                ${asignadoOpts.map(c => `<option value="${c}" ${c === r.asignado_a ? 'selected' : ''}>${c}</option>`).join('')}
+               </select>`
+            : `<span style="color:var(--text3);font-size:0.8rem">${r.asignado_a || '—'}</span>`;
+        const waCell = !r.wa_click_at
+            ? '<span style="color:var(--text3)">—</span>'
+            : isLiteLead(r)
+                ? '<span class="lite-badge" title="Pidió info de formación · ' + new Date(r.wa_click_at).toLocaleString('es-AR') + '">Lite</span>'
+                : '<span title="' + new Date(r.wa_click_at).toLocaleString('es-AR') + '" style="color:#25D366;font-size:1rem">✓</span>';
         const clasifCell = canClassify
             ? `<select class="clasif-select${clasifVal ? ' ' + clasifVal : ''}" onchange="updateClasif(${r.id}, this)">
                 <option value=""              ${!clasifVal                    ? 'selected' : ''}>Sin clasificar</option>
                 <option value="calificado"    ${clasifVal==='calificado'    ? 'selected' : ''}>✓ Calificado</option>
                 <option value="no_calificado" ${clasifVal==='no_calificado' ? 'selected' : ''}>✗ No calificado</option>
-                <option value="en_proceso"    ${clasifVal==='en_proceso'    ? 'selected' : ''}>⏳ En proceso</option>
                </select>`
             : `<span style="color:var(--text3);font-size:0.8rem">${clasifVal || '—'}</span>`;
 
@@ -709,11 +811,14 @@ function renderTable(rows, dupSet) {
             <td class="nombre-col">${nombreDisplay}</td>
             <td class="celular-col">${celularDisplay}</td>
             <td>${canalDisplay}</td>
+            <td>${origenDisplay}</td>
             <td class="email-col">${emailDisplay}</td>
             <td class="capital-col">${capStr}${isAuto ? ' <span style="color:var(--text3);font-size:0.7rem">(auto)</span>' : ''}</td>
             <td class="score-col">${scoreBadge}</td>
-            <td style="text-align:center">${r.wa_click_at ? '<span title="' + new Date(r.wa_click_at).toLocaleString('es-AR') + '" style="color:#25D366;font-size:1rem">✓</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+            <td style="text-align:center">${waCell}</td>
             <td class="clasif-col">${clasifCell}</td>
+            <td class="clasif-col">${estadoCell}</td>
+            <td class="clasif-col">${asignadoCell}</td>
             <td>
                 <div class="action-btns">
                     <button class="ver-btn" onclick="openModal(${r.id})">Ver →</button>
@@ -725,17 +830,38 @@ function renderTable(rows, dupSet) {
     }).join('');
 }
 
+async function adminWrite(payload) {
+    try {
+        const res = await fetch(API + '/admin-write', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) throw new Error(data.error || 'HTTP ' + res.status);
+        return true;
+    } catch (e) {
+        console.error(e);
+        alert('No se pudo guardar el cambio: ' + e.message);
+        return false;
+    }
+}
 async function updateClasif(id, selectEl) {
     const val = selectEl.value || null;
-    selectEl.className = 'clasif-select' + (val ? ' ' + val : '');
+    if (!(await adminWrite({ action: 'clasificacion', id, clasificacion: val }))) { applyFilters(); return; }
     const row = allRows.find(r => r.id === id);
     if (row) row.clasificacion = val;
-    try {
-        await fetch(API + '/admin-write', {
-            method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({ action: 'clasificacion', id, clasificacion: val })
-        });
-    } catch (e) { console.error(e); }
+    applyFilters();
+}
+async function updateEstado(id, selectEl) {
+    const val = selectEl.value;
+    if (!(await adminWrite({ action: 'estado', id, estado: val }))) { applyFilters(); return; }
+    const row = allRows.find(r => r.id === id);
+    if (row) row.estado_comercial = val;
+    applyFilters();
+}
+async function updateAsignado(id, selectEl) {
+    const val = selectEl.value || null;
+    if (!(await adminWrite({ action: 'asignar', id, asignado: val }))) { applyFilters(); return; }
+    const row = allRows.find(r => r.id === id);
+    if (row) row.asignado_a = val;
+    applyFilters();
 }
 
 // ── MODAL LEAD ──
@@ -749,6 +875,7 @@ function openModal(id) {
     const modalWaUrl = waHref(r.celular);
     document.getElementById('modal-contacto').innerHTML =
         (nombreCompleto || '—') + '  ·  Cel: ' + (r.celular || '—') + '  ·  Canal: ' + canalLabel +
+        '  ·  Origen: ' + escHtml([origenInfo(r).label, origenInfo(r).creativo, origenInfo(r).detalle].filter(Boolean).join(' · ')) +
         (modalWaUrl ? ` <a class="wa-btn wa-btn-modal" href="${modalWaUrl}" target="_blank" rel="noopener">📲 Contactar por WhatsApp</a>` : '');
     document.getElementById('modal-portfolio').textContent = r.portfolio || '—';
     document.getElementById('modal-nota').textContent = r.nota_interna || '—';

@@ -1,6 +1,8 @@
 import http from 'http';
 import https from 'https';
 import pg from 'pg';
+import { createRequire } from 'module';
+const { sanitizeOrigen } = createRequire(import.meta.url)('./api/_origen.js');
 
 const { Pool } = pg;
 const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
@@ -117,17 +119,18 @@ http.createServer(async (req, res) => {
 
         // ── GUARDAR DIAGNÓSTICO ───────────────────────
         if (req.url === '/save') {
-            const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal } = body;
+            const { portfolio, quizAnswers, diagnostico, notaInterna, score, canal, origen } = body;
             const { rows } = await pool.query(
-                `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                `INSERT INTO diagnosticos (portfolio, quiz_answers, diagnostico, nota_interna, score, canal, origen)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
                 [
                     typeof portfolio === 'object' ? JSON.stringify(portfolio) : (portfolio || ''),
                     typeof quizAnswers === 'object' ? JSON.stringify(quizAnswers) : (quizAnswers || ''),
                     diagnostico || '',
                     notaInterna || '',
                     score ?? null,
-                    (canal === 'outbound' || canal === 'agendado') ? canal : 'inbound'
+                    (canal === 'outbound' || canal === 'agendado') ? canal : 'inbound',
+                    sanitizeOrigen(origen)
                 ]
             );
             const id = rows[0].id;
