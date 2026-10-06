@@ -7,7 +7,7 @@ const pool = new Pool({
     max: 1
 });
 
-const ALLOWED_EVENTS = ['cta_start', 'portfolio_submitted', 'email_submitted', 'diag_completed'];
+const ALLOWED_EVENTS = ['cta_start', 'portfolio_submitted', 'email_submitted', 'diag_completed', 'portfolio_missing_detail'];
 
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -45,6 +45,20 @@ module.exports = async function handler(req, res) {
         if (!id) { res.status(400).json({ error: 'Falta id' }); return; }
         try {
             await pool.query(`UPDATE diagnosticos SET wa_click_at = NOW() WHERE id = $1`, [id]);
+            res.status(200).json({ ok: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+        return;
+    }
+
+    // wa-sesion-click: calificado que tocó "Reclamar mi sesión" (separado de wa_click,
+    // que el admin usa para el badge "Lite" de no calificados)
+    if (event === 'wa_sesion_click') {
+        if (!id) { res.status(400).json({ error: 'Falta id' }); return; }
+        await pool.query(`ALTER TABLE diagnosticos ADD COLUMN IF NOT EXISTS wa_sesion_click_at TIMESTAMPTZ`).catch(() => {});
+        try {
+            await pool.query(`UPDATE diagnosticos SET wa_sesion_click_at = NOW() WHERE id = $1`, [id]);
             res.status(200).json({ ok: true });
         } catch (e) {
             res.status(500).json({ error: e.message });
