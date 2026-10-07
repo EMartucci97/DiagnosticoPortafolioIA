@@ -2849,19 +2849,31 @@ function addAsset(assetsWrap, addAssetBtn, shouldFocus) {
 // ── DETALLE OBLIGATORIO POR SECTOR ──────────────────
 // Sectores donde el riesgo depende de QUÉ activo es (ticker/moneda/bono). Los exentos se aceptan sin detalle.
 const SECTOR_SIN_DETALLE = /liquidez|cash|efectivo|real\s*estate|inmueble|propiedad|departamento|startup|plazo\s*fijo/i;
+// El orden importa: gana el primer match ("Fondos de bonos" → fondo, "Acciones tecnológicas" → tecnología)
 const SECTOR_EJEMPLOS = [
-    [/accion|acción|stock|cedear/i, 'AAPL, MELI, KO'],
-    [/cripto|crypto|bitcoin/i,      'BTC, ETH, SOL'],
-    [/bono|renta\s*fija|oblig/i, 'AL30, GD35, Treasury 10Y'],
-    [/etf/i,                         'SPY, QQQ, EEM'],
-    [/fondo|fci/i,                   'nombre del fondo o FCI'],
-    [/metal|oro|plata/i,             'Oro, Plata, GLD'],
-    [/commodit/i,                    'Petróleo, Soja, USO'],
+    [/etf/i,                                 'SPY, QQQ, EEM',            'No es lo mismo un ETF del S&P 500 que uno de un solo sector o de emergentes'],
+    [/fondo|fci/i,                           'nombre del fondo o FCI',   'No es lo mismo un money market que un fondo de acciones o de bonos'],
+    [/cripto|crypto|bitcoin/i,               'BTC, ETH, SOL',            'No es lo mismo Bitcoin que una altcoin chica o una stablecoin'],
+    [/metal|oro\b|plata/i,                   'Oro, Plata, GLD',          'No es lo mismo el oro que la plata o un ETF de mineras'],
+    [/commodit|agro/i,                       'Petróleo, Soja, USO',      'No es lo mismo el petróleo que un agrícola como la soja'],
+    [/bono|renta\s*fija|oblig|\bON\b|letra/i, 'AL30, GD35, Treasury 10Y', 'No es lo mismo un bono argentino que un Treasury de EE.UU., ni uno corto que uno largo'],
+    [/tecnol|tech|semicon/i,                 'AAPL, NVDA, MSFT',         'No es lo mismo una big tech consolidada que una tecnológica chica o de semiconductores'],
+    [/energ|petrol|oil|gas/i,                'XOM, YPF, VIST',           'No es lo mismo una petrolera que una eléctrica o una de energías renovables'],
+    [/banc|financ|finanz/i,                  'JPM, GGAL, BBVA',          'No es lo mismo un banco grande de EE.UU. que un banco argentino o una aseguradora'],
+    [/salud|health|farma|biotec/i,           'JNJ, PFE, UNH',            'No es lo mismo una farmacéutica grande que una biotecnológica chica'],
+    [/consumo/i,                             'KO, WMT, AMZN',            'No es lo mismo consumo básico (alimentos, supermercados) que consumo discrecional'],
+    [/inmobiliar|reit/i,                     'O, VNQ, IRSA',             'No es lo mismo un REIT de oficinas que uno residencial o de centros de datos'],
+    [/accion|acción|stock|cedear|merval/i,   'AAPL, MELI, KO',           'No es lo mismo una tecnológica que un banco o una energética'],
 ];
+
 function sectorRequiereDetalle(name) { return !SECTOR_SIN_DETALLE.test(name); }
 function sectorEjemplo(name) {
     const m = SECTOR_EJEMPLOS.find(([re]) => re.test(name));
     return m ? m[1] : 'nombre o ticker de cada activo';
+}
+function sectorContraste(name) {
+    const m = SECTOR_EJEMPLOS.find(([re]) => re.test(name));
+    return m ? m[2] + ': el riesgo' : 'El riesgo';
 }
 function assetPlaceholder(sectorName, idx) {
     if (/liquidez|cash|efectivo/i.test(sectorName)) return 'Escribe la moneda';
@@ -2906,7 +2918,7 @@ function mostrarAvisoDetalle(faltan) {
             const msg = document.createElement('div');
             msg.className = 'sector-detail-msg';
             msg.textContent = 'Indicá qué ' + name.toLowerCase() + ' tenés (ej: ' + sectorEjemplo(name) + ') y, si podés, cuánto en cada uno. '
-                + 'No es lo mismo una tecnológica que un banco o una energética: el riesgo de cada activo depende de su sector y del momento del ciclo en que está.';
+                + sectorContraste(name) + ' de cada activo depende de qué es y del momento del ciclo en que está.';
             row.querySelector('.sector-assets').prepend(msg);
             // Al completar cualquier activo de este sector, se saca el aviso (sin tocar lo demás)
             row.addEventListener('input', function onFix() {
